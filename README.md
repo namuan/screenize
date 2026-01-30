@@ -36,6 +36,16 @@ Download the latest version from [GitHub Releases](https://github.com/syi0808/sc
 
 Open the `.dmg` file and drag Screenize into the Applications folder.
 
+> **macOS Gatekeeper warning:** Screenize is not notarized with Apple, so macOS may display a warning when you first open the app. To open it:
+>
+> 1. Right-click (or Control-click) the Screenize app in the Applications folder
+> 2. Select **Open** from the context menu
+> 3. Click **Open** in the dialog that appears
+>
+> Alternatively, go to **System Settings > Privacy & Security**, scroll down, and click **Open Anyway** next to the Screenize message.
+>
+> You only need to do this once — macOS will remember your choice for future launches.
+
 ### Setup
 
 On first launch, Screenize will request the following permissions:
