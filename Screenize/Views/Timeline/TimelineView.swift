@@ -348,7 +348,7 @@ struct TimelineView: View {
                     }
                 )
                 .opacity(isTimeInTrimRange(keyframe.time) ? 1.0 : 0.3)
-                .position(x: CGFloat(keyframe.time) * pixelsPerSecond, y: trackHeight / 2)
+                .position(x: max(8, CGFloat(keyframe.time) * pixelsPerSecond), y: trackHeight / 2)
             }
 
         case .ripple(let rippleTrack):
@@ -371,7 +371,7 @@ struct TimelineView: View {
                     }
                 )
                 .opacity(isTimeInTrimRange(keyframe.time) ? 1.0 : 0.3)
-                .position(x: CGFloat(keyframe.time) * pixelsPerSecond, y: trackHeight / 2)
+                .position(x: max(8, CGFloat(keyframe.time) * pixelsPerSecond), y: trackHeight / 2)
             }
 
         case .cursor(let cursorTrack):
@@ -395,7 +395,7 @@ struct TimelineView: View {
                         }
                     )
                     .opacity(isTimeInTrimRange(keyframe.time) ? 1.0 : 0.3)
-                    .position(x: CGFloat(keyframe.time) * pixelsPerSecond, y: trackHeight / 2)
+                    .position(x: max(8, CGFloat(keyframe.time) * pixelsPerSecond), y: trackHeight / 2)
                 }
             }
 
@@ -419,7 +419,7 @@ struct TimelineView: View {
                     }
                 )
                 .opacity(isTimeInTrimRange(keyframe.time) ? 1.0 : 0.3)
-                .position(x: CGFloat(keyframe.time) * pixelsPerSecond, y: trackHeight / 2)
+                .position(x: max(8, CGFloat(keyframe.time) * pixelsPerSecond), y: trackHeight / 2)
             }
         }
     }

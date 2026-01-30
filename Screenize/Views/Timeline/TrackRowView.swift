@@ -134,7 +134,7 @@ struct TrackRowView<T: Track>: View {
                         onKeyframeTimeChange?(keyframe.id, newTime)
                     }
                 )
-                .position(x: 6, y: Self.rowHeight / 2)
+                .position(x: max(8, CGFloat(keyframe.time) * pixelsPerSecond - scrollOffset), y: Self.rowHeight / 2)
             }
         } else if let rippleTrack = track as? RippleTrack {
             ForEach(rippleTrack.keyframes) { keyframe in
@@ -151,7 +151,7 @@ struct TrackRowView<T: Track>: View {
                         onKeyframeTimeChange?(keyframe.id, newTime)
                     }
                 )
-                .position(x: 6, y: Self.rowHeight / 2)
+                .position(x: max(8, CGFloat(keyframe.time) * pixelsPerSecond - scrollOffset), y: Self.rowHeight / 2)
             }
         } else if let cursorTrack = track as? CursorTrack {
             ForEach(cursorTrack.styleKeyframes ?? []) { keyframe in
@@ -168,7 +168,24 @@ struct TrackRowView<T: Track>: View {
                         onKeyframeTimeChange?(keyframe.id, newTime)
                     }
                 )
-                .position(x: 6, y: Self.rowHeight / 2)
+                .position(x: max(8, CGFloat(keyframe.time) * pixelsPerSecond - scrollOffset), y: Self.rowHeight / 2)
+            }
+        } else if let keystrokeTrack = track as? KeystrokeTrack {
+            ForEach(keystrokeTrack.keyframes) { keyframe in
+                DraggableKeyframeMarker(
+                    id: keyframe.id,
+                    time: keyframe.time,
+                    isSelected: selectedKeyframeID == keyframe.id,
+                    color: trackColor,
+                    pixelsPerSecond: pixelsPerSecond,
+                    scrollOffset: scrollOffset,
+                    duration: duration,
+                    onSelect: { onKeyframeSelect?(keyframe.id) },
+                    onTimeChange: { newTime in
+                        onKeyframeTimeChange?(keyframe.id, newTime)
+                    }
+                )
+                .position(x: max(8, CGFloat(keyframe.time) * pixelsPerSecond - scrollOffset), y: Self.rowHeight / 2)
             }
         }
     }
