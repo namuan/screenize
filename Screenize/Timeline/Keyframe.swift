@@ -459,3 +459,72 @@ struct KeystrokeKeyframe: TimedKeyframe, Equatable {
         return 1.0
     }
 }
+
+// MARK: - Annotation Keyframe
+
+/// Text annotation keyframe
+struct AnnotationKeyframe: TimedKeyframe, Equatable {
+    let id: UUID
+    var time: TimeInterval           // Annotation start time
+    var text: String                 // Text to display
+    var duration: TimeInterval       // Display duration
+    var fadeInDuration: TimeInterval // Fade-in duration
+    var fadeOutDuration: TimeInterval // Fade-out duration
+    var position: NormalizedPoint    // Overlay center position (UI uses top-left origin)
+    var fontScale: CGFloat           // Relative to frame height (e.g. 0.04 = 4%)
+    var easing: EasingCurve
+
+    init(
+        id: UUID = UUID(),
+        time: TimeInterval,
+        text: String,
+        duration: TimeInterval = 2.0,
+        fadeInDuration: TimeInterval = 0.15,
+        fadeOutDuration: TimeInterval = 0.3,
+        position: NormalizedPoint = NormalizedPoint(x: 0.5, y: 0.25),
+        fontScale: CGFloat = 0.04,
+        easing: EasingCurve = .easeOut
+    ) {
+        self.id = id
+        self.time = time
+        self.text = text
+        self.duration = max(0.2, duration)
+        self.fadeInDuration = max(0, fadeInDuration)
+        self.fadeOutDuration = max(0, fadeOutDuration)
+        self.position = position.clamped()
+        self.fontScale = max(0.015, min(0.12, fontScale))
+        self.easing = easing
+    }
+
+    /// Overlay end time
+    var endTime: TimeInterval {
+        time + duration
+    }
+
+    /// Check if the overlay is active at the given time
+    func isActive(at currentTime: TimeInterval) -> Bool {
+        currentTime >= time && currentTime <= endTime
+    }
+
+    /// Progress at the given time (0.0-1.0)
+    func progress(at currentTime: TimeInterval) -> CGFloat {
+        guard isActive(at: currentTime), duration > 0 else { return 0 }
+        let elapsed = currentTime - time
+        return CGFloat(elapsed / duration)
+    }
+
+    /// Opacity at the given time (with fade-in/out applied)
+    func opacity(at currentTime: TimeInterval) -> CGFloat {
+        guard isActive(at: currentTime) else { return 0 }
+        let elapsed = currentTime - time
+        let remaining = endTime - currentTime
+
+        if elapsed < fadeInDuration, fadeInDuration > 0 {
+            return CGFloat(elapsed / fadeInDuration)
+        }
+        if remaining < fadeOutDuration, fadeOutDuration > 0 {
+            return CGFloat(remaining / fadeOutDuration)
+        }
+        return 1.0
+    }
+}

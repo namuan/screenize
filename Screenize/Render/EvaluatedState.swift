@@ -1,6 +1,8 @@
 import Foundation
 import CoreGraphics
 
+// NormalizedPoint lives in Core/Coordinates.swift
+
 // MARK: - Evaluated Frame State
 
 /// Evaluated frame state at a specific time
@@ -21,18 +23,23 @@ struct EvaluatedFrameState {
     /// Active keystroke overlays
     let keystrokes: [ActiveKeystroke]
 
+    /// Active annotations
+    let annotations: [ActiveAnnotation]
+
     init(
         time: TimeInterval,
         transform: TransformState,
         ripples: [ActiveRipple],
         cursor: CursorState,
-        keystrokes: [ActiveKeystroke] = []
+        keystrokes: [ActiveKeystroke] = [],
+        annotations: [ActiveAnnotation] = []
     ) {
         self.time = time
         self.transform = transform
         self.ripples = ripples
         self.cursor = cursor
         self.keystrokes = keystrokes
+        self.annotations = annotations
     }
 }
 
@@ -296,6 +303,33 @@ struct ActiveKeystroke {
         self.opacity = keyframe.opacity(at: time)
         self.progress = keyframe.progress(at: time)
         self.position = keyframe.position
+    }
+}
+
+// MARK: - Active Annotation
+
+/// Currently active text annotation
+struct ActiveAnnotation {
+    let text: String
+    let opacity: CGFloat
+    let progress: CGFloat
+    let position: NormalizedPoint
+    let fontScale: CGFloat
+
+    init(text: String, opacity: CGFloat, progress: CGFloat, position: NormalizedPoint, fontScale: CGFloat) {
+        self.text = text
+        self.opacity = max(0, min(1, opacity))
+        self.progress = max(0, min(1, progress))
+        self.position = position
+        self.fontScale = max(0.015, min(0.12, fontScale))
+    }
+
+    init(from keyframe: AnnotationKeyframe, at time: TimeInterval) {
+        self.text = keyframe.text
+        self.opacity = keyframe.opacity(at: time)
+        self.progress = keyframe.progress(at: time)
+        self.position = keyframe.position
+        self.fontScale = keyframe.fontScale
     }
 }
 

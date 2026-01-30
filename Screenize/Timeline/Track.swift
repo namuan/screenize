@@ -9,6 +9,7 @@ enum TrackType: String, Codable, CaseIterable {
     case ripple      // Click ripple effect
     case cursor      // Cursor style/visibility
     case keystroke   // Keystroke overlay
+    case annotation  // Text annotations
     case audio       // Audio (future extension)
 }
 
@@ -215,6 +216,54 @@ struct KeystrokeTrack: Track, Equatable {
     }
 }
 
+// MARK: - Annotation Track
+
+/// Annotation overlay track
+struct AnnotationTrack: Track, Equatable {
+    let id: UUID
+    var name: String
+    var isEnabled: Bool
+    var keyframes: [AnnotationKeyframe]
+
+    var trackType: TrackType { .annotation }
+    var keyframeCount: Int { keyframes.count }
+
+    init(
+        id: UUID = UUID(),
+        name: String = "Annotation",
+        isEnabled: Bool = true,
+        keyframes: [AnnotationKeyframe] = []
+    ) {
+        self.id = id
+        self.name = name
+        self.isEnabled = isEnabled
+        self.keyframes = keyframes.sorted { $0.time < $1.time }
+    }
+
+    // MARK: - Keyframe Management
+
+    mutating func addKeyframe(_ keyframe: AnnotationKeyframe) {
+        keyframes.append(keyframe)
+        keyframes.sort { $0.time < $1.time }
+    }
+
+    mutating func removeKeyframe(id: UUID) {
+        keyframes.removeAll { $0.id == id }
+    }
+
+    mutating func updateKeyframe(_ keyframe: AnnotationKeyframe) {
+        if let index = keyframes.firstIndex(where: { $0.id == keyframe.id }) {
+            keyframes[index] = keyframe
+            keyframes.sort { $0.time < $1.time }
+        }
+    }
+
+    /// Active annotations at the given time
+    func activeAnnotations(at time: TimeInterval) -> [AnnotationKeyframe] {
+        keyframes.filter { $0.isActive(at: time) }
+    }
+}
+
 // MARK: - AnyTrack (Type-Erased Wrapper)
 
 /// Type-erased track wrapper (Codable support)
@@ -223,6 +272,7 @@ enum AnyTrack: Codable, Identifiable, Equatable {
     case ripple(RippleTrack)
     case cursor(CursorTrack)
     case keystroke(KeystrokeTrack)
+    case annotation(AnnotationTrack)
 
     var id: UUID {
         switch self {
@@ -230,6 +280,7 @@ enum AnyTrack: Codable, Identifiable, Equatable {
         case .ripple(let track): return track.id
         case .cursor(let track): return track.id
         case .keystroke(let track): return track.id
+        case .annotation(let track): return track.id
         }
     }
 
@@ -240,6 +291,7 @@ enum AnyTrack: Codable, Identifiable, Equatable {
             case .ripple(let track): return track.name
             case .cursor(let track): return track.name
             case .keystroke(let track): return track.name
+            case .annotation(let track): return track.name
             }
         }
         set {
@@ -256,6 +308,9 @@ enum AnyTrack: Codable, Identifiable, Equatable {
             case .keystroke(var track):
                 track.name = newValue
                 self = .keystroke(track)
+            case .annotation(var track):
+                track.name = newValue
+                self = .annotation(track)
             }
         }
     }
@@ -267,6 +322,7 @@ enum AnyTrack: Codable, Identifiable, Equatable {
             case .ripple(let track): return track.isEnabled
             case .cursor(let track): return track.isEnabled
             case .keystroke(let track): return track.isEnabled
+            case .annotation(let track): return track.isEnabled
             }
         }
         set {
@@ -283,6 +339,9 @@ enum AnyTrack: Codable, Identifiable, Equatable {
             case .keystroke(var track):
                 track.isEnabled = newValue
                 self = .keystroke(track)
+            case .annotation(var track):
+                track.isEnabled = newValue
+                self = .annotation(track)
             }
         }
     }
@@ -293,6 +352,7 @@ enum AnyTrack: Codable, Identifiable, Equatable {
         case .ripple: return .ripple
         case .cursor: return .cursor
         case .keystroke: return .keystroke
+        case .annotation: return .annotation
         }
     }
 
@@ -319,6 +379,9 @@ enum AnyTrack: Codable, Identifiable, Equatable {
         case .keystroke:
             let track = try container.decode(KeystrokeTrack.self, forKey: .data)
             self = .keystroke(track)
+        case .annotation:
+            let track = try container.decode(AnnotationTrack.self, forKey: .data)
+            self = .annotation(track)
         case .audio:
             // Future extension
             throw DecodingError.dataCorruptedError(
@@ -345,6 +408,9 @@ enum AnyTrack: Codable, Identifiable, Equatable {
         case .keystroke(let track):
             try container.encode(TrackType.keystroke, forKey: .type)
             try container.encode(track, forKey: .data)
+        case .annotation(let track):
+            try container.encode(TrackType.annotation, forKey: .type)
+            try container.encode(track, forKey: .data)
         }
     }
 
@@ -364,5 +430,9 @@ enum AnyTrack: Codable, Identifiable, Equatable {
 
     init(_ track: KeystrokeTrack) {
         self = .keystroke(track)
+    }
+
+    init(_ track: AnnotationTrack) {
+        self = .annotation(track)
     }
 }

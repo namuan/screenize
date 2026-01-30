@@ -277,6 +277,12 @@ struct EditorMainView: View {
             } label: {
                 Label("Keystroke Keyframe", systemImage: "keyboard")
             }
+
+            Button {
+                viewModel.addKeyframe(to: .annotation)
+            } label: {
+                Label("Annotation Keyframe", systemImage: "text.bubble")
+            }
         } label: {
             Label("Add Keyframe", systemImage: "plus.diamond")
         }

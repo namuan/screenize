@@ -216,6 +216,12 @@ struct ProjectCreator {
                     isEnabled: true,
                     keyframes: []
                 )),
+                AnyTrack(AnnotationTrack(
+                    id: UUID(),
+                    name: "Annotation",
+                    isEnabled: true,
+                    keyframes: []
+                )),
             ],
             duration: duration
         )

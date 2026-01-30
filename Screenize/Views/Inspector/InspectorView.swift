@@ -141,6 +141,16 @@ struct InspectorView: View {
                         keyframeNotFound
                     }
 
+                case .annotation:
+                    if let binding = annotationKeyframeBinding(for: keyframeID) {
+                        AnnotationInspector(
+                            keyframe: binding,
+                            onChange: onKeyframeChange
+                        )
+                    } else {
+                        keyframeNotFound
+                    }
+
                 case .audio:
                     // Implement when audio tracks are supported in the future
                     emptyState
@@ -280,6 +290,8 @@ struct InspectorView: View {
             return "cursorarrow"
         case .keystroke:
             return "keyboard"
+        case .annotation:
+            return "text.bubble"
         case .audio:
             return "waveform"
         }
@@ -295,6 +307,8 @@ struct InspectorView: View {
             return "Cursor Track"
         case .keystroke:
             return "Keystroke Track"
+        case .annotation:
+            return "Annotation Track"
         case .audio:
             return "Audio Track"
         }
@@ -310,6 +324,8 @@ struct InspectorView: View {
             return timeline.cursorTrack?.styleKeyframes?.count ?? 0
         case .keystroke:
             return timeline.keystrokeTrack?.keyframes.count ?? 0
+        case .annotation:
+            return timeline.annotationTrack?.keyframes.count ?? 0
         case .audio:
             return 0  // Implement once audio track support exists
         }
@@ -436,6 +452,31 @@ struct InspectorView: View {
                    let keyframeIndex = track.keyframes.firstIndex(where: { $0.id == id }) {
                     track.keyframes[keyframeIndex] = newValue
                     self.timeline.tracks[trackIndex] = .keystroke(track)
+                }
+            }
+        )
+    }
+
+    private func annotationKeyframeBinding(for id: UUID) -> Binding<AnnotationKeyframe>? {
+        guard let trackIndex = timeline.tracks.firstIndex(where: { $0.trackType == .annotation }),
+              case .annotation(let track) = timeline.tracks[trackIndex],
+              track.keyframes.contains(where: { $0.id == id }) else {
+            return nil
+        }
+
+        return Binding(
+            get: {
+                if case .annotation(let track) = self.timeline.tracks[trackIndex],
+                   let keyframeIndex = track.keyframes.firstIndex(where: { $0.id == id }) {
+                    return track.keyframes[keyframeIndex]
+                }
+                return AnnotationKeyframe(time: 0, text: "")
+            },
+            set: { newValue in
+                if case .annotation(var track) = self.timeline.tracks[trackIndex],
+                   let keyframeIndex = track.keyframes.firstIndex(where: { $0.id == id }) {
+                    track.keyframes[keyframeIndex] = newValue
+                    self.timeline.tracks[trackIndex] = .annotation(track)
                 }
             }
         )

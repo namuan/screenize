@@ -187,6 +187,23 @@ struct TrackRowView<T: Track>: View {
                 )
                 .position(x: max(8, CGFloat(keyframe.time) * pixelsPerSecond - scrollOffset), y: Self.rowHeight / 2)
             }
+        } else if let annotationTrack = track as? AnnotationTrack {
+            ForEach(annotationTrack.keyframes) { keyframe in
+                DraggableKeyframeMarker(
+                    id: keyframe.id,
+                    time: keyframe.time,
+                    isSelected: selectedKeyframeID == keyframe.id,
+                    color: trackColor,
+                    pixelsPerSecond: pixelsPerSecond,
+                    scrollOffset: scrollOffset,
+                    duration: duration,
+                    onSelect: { onKeyframeSelect?(keyframe.id) },
+                    onTimeChange: { newTime in
+                        onKeyframeTimeChange?(keyframe.id, newTime)
+                    }
+                )
+                .position(x: max(8, CGFloat(keyframe.time) * pixelsPerSecond - scrollOffset), y: Self.rowHeight / 2)
+            }
         }
     }
 
@@ -206,6 +223,8 @@ struct TrackRowView<T: Track>: View {
             return "cursorarrow"
         case .keystroke:
             return "keyboard"
+        case .annotation:
+            return "text.bubble"
         case .audio:
             return "waveform"
         }
@@ -354,6 +373,25 @@ struct AnyTrackRowView: View {
                     }
                 ),
                 trackType: .keystroke,
+                duration: duration,
+                pixelsPerSecond: pixelsPerSecond,
+                scrollOffset: scrollOffset,
+                selectedKeyframeID: $selectedKeyframeID,
+                onKeyframeSelect: onKeyframeSelect,
+                onKeyframeTimeChange: onKeyframeTimeChange,
+                onAddKeyframe: onAddKeyframe
+            )
+
+        case .annotation(var annotationTrack):
+            TrackRowView(
+                track: Binding(
+                    get: { annotationTrack },
+                    set: { newValue in
+                        annotationTrack = newValue
+                        track = .annotation(newValue)
+                    }
+                ),
+                trackType: .annotation,
                 duration: duration,
                 pixelsPerSecond: pixelsPerSecond,
                 scrollOffset: scrollOffset,

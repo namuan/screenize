@@ -2,6 +2,7 @@ import Foundation
 import CoreGraphics
 import CoreImage
 import AppKit
+import Foundation
 
 /// Effect compositor
 /// Renders ripple effects and the cursor
@@ -249,6 +250,100 @@ final class EffectCompositor {
         }
 
         return result
+    }
+
+    // MARK: - Annotation Overlay Rendering
+
+    func renderAnnotationOverlay(_ annotations: [ActiveAnnotation], frameSize: CGSize) -> CIImage? {
+        let visible = annotations.filter { !$0.text.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).isEmpty && $0.opacity > 0 }
+        guard !visible.isEmpty else { return nil }
+
+        var result: CIImage?
+        for annotation in visible {
+            guard let image = renderSingleAnnotation(annotation, frameSize: frameSize) else { continue }
+            if let existing = result {
+                result = image.composited(over: existing)
+            } else {
+                result = image
+            }
+        }
+        return result
+    }
+
+    private func renderSingleAnnotation(_ annotation: ActiveAnnotation, frameSize: CGSize) -> CIImage? {
+        let baseFontSize: CGFloat = max(16, frameSize.height * annotation.fontScale)
+        let font = NSFont.systemFont(ofSize: baseFontSize, weight: .semibold)
+        let cornerRadius: CGFloat = baseFontSize * 0.55
+        let paddingH: CGFloat = baseFontSize * 0.9
+        let paddingV: CGFloat = baseFontSize * 0.55
+        let maxTextWidth: CGFloat = min(frameSize.width * 0.75, 900)
+
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.lineBreakMode = .byWordWrapping
+        paragraph.alignment = .center
+
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: NSColor.white.withAlphaComponent(annotation.opacity),
+            .paragraphStyle: paragraph
+        ]
+
+        let text = annotation.text as NSString
+        let constraint = CGSize(width: maxTextWidth, height: 10_000)
+        let textRect = text.boundingRect(
+            with: constraint,
+            options: [NSString.DrawingOptions.usesLineFragmentOrigin, NSString.DrawingOptions.usesFontLeading],
+            attributes: attributes
+        )
+
+        let textSize = CGSize(width: ceil(textRect.width), height: ceil(textRect.height))
+        let bubbleWidth = textSize.width + paddingH * 2
+        let bubbleHeight = textSize.height + paddingV * 2
+        let bitmapWidth = Int(ceil(bubbleWidth))
+        let bitmapHeight = Int(ceil(bubbleHeight))
+
+        guard bitmapWidth > 0, bitmapHeight > 0 else { return nil }
+
+        guard let context = CGContext(
+            data: nil,
+            width: bitmapWidth,
+            height: bitmapHeight,
+            bitsPerComponent: 8,
+            bytesPerRow: bitmapWidth * 4,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return nil }
+
+        let nsContext = NSGraphicsContext(cgContext: context, flipped: false)
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = nsContext
+
+        let bubbleRect = CGRect(x: 0, y: 0, width: bubbleWidth, height: bubbleHeight)
+        let path = NSBezierPath(roundedRect: bubbleRect, xRadius: cornerRadius, yRadius: cornerRadius)
+        NSColor(white: 0.08, alpha: 0.78 * annotation.opacity).setFill()
+        path.fill()
+
+        // Subtle border
+        NSColor(white: 1.0, alpha: 0.10 * annotation.opacity).setStroke()
+        path.lineWidth = 1
+        path.stroke()
+
+        // Text is drawn in a top-left origin style; flip into the NSGraphicsContext coordinate space.
+        let drawRect = CGRect(x: paddingH, y: paddingV, width: textSize.width, height: textSize.height)
+        text.draw(with: drawRect, options: [NSString.DrawingOptions.usesLineFragmentOrigin, NSString.DrawingOptions.usesFontLeading], attributes: attributes)
+
+        NSGraphicsContext.restoreGraphicsState()
+
+        guard let cgImage = context.makeImage() else { return nil }
+        var ciImage = CIImage(cgImage: cgImage)
+
+        // Position: NormalizedPoint uses top-left origin (y=0 top, y=1 bottom)
+        // CoreImage uses bottom-left origin, so flip Y
+        let posX = annotation.position.x * frameSize.width - CGFloat(bitmapWidth) / 2
+        let posY = (1.0 - annotation.position.y) * frameSize.height - CGFloat(bitmapHeight) / 2
+        ciImage = ciImage.transformed(by: CGAffineTransform(translationX: posX, y: posY))
+        ciImage = ciImage.cropped(to: CGRect(origin: .zero, size: frameSize))
+        return ciImage
     }
 
     /// Render a single keystroke pill at its position

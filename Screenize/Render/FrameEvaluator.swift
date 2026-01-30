@@ -62,13 +62,15 @@ final class FrameEvaluator {
         let transform = evaluateTransform(at: time)
         let ripples = evaluateRipples(at: time)
         let keystrokes = evaluateKeystrokes(at: time)
+        let annotations = evaluateAnnotations(at: time)
 
         return EvaluatedFrameState(
             time: time,
             transform: transform,
             ripples: ripples,
             cursor: cursor,
-            keystrokes: keystrokes
+            keystrokes: keystrokes,
+            annotations: annotations
         )
     }
 
@@ -151,6 +153,19 @@ final class FrameEvaluator {
 
         return activeKeyframes.map { keyframe in
             ActiveKeystroke(from: keyframe, at: time)
+        }
+    }
+
+    // MARK: - Annotation Evaluation
+
+    private func evaluateAnnotations(at time: TimeInterval) -> [ActiveAnnotation] {
+        guard let track = timeline.annotationTrack, track.isEnabled else {
+            return []
+        }
+
+        let activeKeyframes = track.activeAnnotations(at: time)
+        return activeKeyframes.map { keyframe in
+            ActiveAnnotation(from: keyframe, at: time)
         }
     }
 

@@ -107,6 +107,16 @@ final class Renderer {
             }
         }
 
+        // 5. Annotation overlay (after transform — fixed screen position)
+        if !state.annotations.isEmpty {
+            if let annotationOverlay = compositor.renderAnnotationOverlay(
+                state.annotations,
+                frameSize: context.outputSize
+            ) {
+                result = annotationOverlay.composited(over: result)
+            }
+        }
+
         return result
     }
 

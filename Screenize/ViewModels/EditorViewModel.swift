@@ -154,6 +154,11 @@ final class EditorViewModel: ObservableObject {
             self.project.timeline.tracks.append(.keystroke(KeystrokeTrack()))
         }
 
+        // Migrate: add annotation track if missing
+        if self.project.timeline.annotationTrack == nil {
+            self.project.timeline.tracks.append(.annotation(AnnotationTrack()))
+        }
+
         setupBindings()
     }
 
@@ -416,6 +421,8 @@ final class EditorViewModel: ObservableObject {
             addCursorKeyframe(at: time)
         case .keystroke:
             addKeystrokeKeyframe(at: time)
+        case .annotation:
+            addAnnotationKeyframe(at: time)
         case .audio:
             break  // TODO: implement audio tracks in the future
         }
@@ -530,6 +537,30 @@ final class EditorViewModel: ObservableObject {
         invalidatePreviewCache()
     }
 
+    private func addAnnotationKeyframe(at time: TimeInterval) {
+        guard let trackIndex = project.timeline.tracks.firstIndex(where: { $0.trackType == .annotation }) else {
+            return
+        }
+
+        guard case .annotation(var track) = project.timeline.tracks[trackIndex] else {
+            return
+        }
+
+        let newKeyframe = AnnotationKeyframe(
+            time: time,
+            text: "Note"
+        )
+
+        track.keyframes.append(newKeyframe)
+        track.keyframes.sort { $0.time < $1.time }
+
+        project.timeline.tracks[trackIndex] = .annotation(track)
+        selectedKeyframeID = newKeyframe.id
+        selectedTrackType = .annotation
+        hasUnsavedChanges = true
+        invalidatePreviewCache()
+    }
+
     /// Delete a keyframe
     func deleteKeyframe(_ id: UUID, from trackType: TrackType) {
         switch trackType {
@@ -541,6 +572,8 @@ final class EditorViewModel: ObservableObject {
             deleteCursorKeyframe(id)
         case .keystroke:
             deleteKeystrokeKeyframe(id)
+        case .annotation:
+            deleteAnnotationKeyframe(id)
         case .audio:
             break  // TODO: implement audio tracks in the future
         }
@@ -615,6 +648,19 @@ final class EditorViewModel: ObservableObject {
         project.timeline.tracks[trackIndex] = .keystroke(track)
     }
 
+    private func deleteAnnotationKeyframe(_ id: UUID) {
+        guard let trackIndex = project.timeline.tracks.firstIndex(where: { $0.trackType == .annotation }) else {
+            return
+        }
+
+        guard case .annotation(var track) = project.timeline.tracks[trackIndex] else {
+            return
+        }
+
+        track.keyframes.removeAll { $0.id == id }
+        project.timeline.tracks[trackIndex] = .annotation(track)
+    }
+
     /// Update a keyframe time
     func updateKeyframeTime(_ id: UUID, to newTime: TimeInterval) {
         // Find and update the keyframe time
@@ -669,6 +715,16 @@ final class EditorViewModel: ObservableObject {
                     invalidatePreviewCache()
                     return
                 }
+
+            case .annotation(var track):
+                if let keyframeIndex = track.keyframes.firstIndex(where: { $0.id == id }) {
+                    track.keyframes[keyframeIndex].time = newTime
+                    track.keyframes.sort { $0.time < $1.time }
+                    project.timeline.tracks[trackIndex] = .annotation(track)
+                    hasUnsavedChanges = true
+                    invalidatePreviewCache()
+                    return
+                }
             }
         }
     }
@@ -705,6 +761,9 @@ final class EditorViewModel: ObservableObject {
             case .keystroke(var track):
                 track.keyframes.removeAll()
                 project.timeline.tracks[trackIndex] = .keystroke(track)
+            case .annotation(var track):
+                track.keyframes.removeAll()
+                project.timeline.tracks[trackIndex] = .annotation(track)
             }
         }
 
@@ -757,6 +816,14 @@ final class EditorViewModel: ObservableObject {
 
         case .keystroke:
             if let track = project.timeline.keystrokeTrack,
+               let keyframe = track.keyframes.first(where: { $0.id == id }) {
+                time = keyframe.time
+            } else {
+                time = nil
+            }
+
+        case .annotation:
+            if let track = project.timeline.annotationTrack,
                let keyframe = track.keyframes.first(where: { $0.id == id }) {
                 time = keyframe.time
             } else {

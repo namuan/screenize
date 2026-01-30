@@ -421,6 +421,29 @@ struct TimelineView: View {
                 .opacity(isTimeInTrimRange(keyframe.time) ? 1.0 : 0.3)
                 .position(x: max(8, CGFloat(keyframe.time) * pixelsPerSecond), y: trackHeight / 2)
             }
+
+        case .annotation(let annotationTrack):
+            ForEach(annotationTrack.keyframes) { keyframe in
+                DraggableKeyframeMarker(
+                    id: keyframe.id,
+                    time: keyframe.time,
+                    isSelected: selectedKeyframeID == keyframe.id,
+                    color: color,
+                    pixelsPerSecond: pixelsPerSecond,
+                    scrollOffset: 0,
+                    duration: duration,
+                    onSelect: {
+                        selectedKeyframeID = keyframe.id
+                        selectedTrackType = .annotation
+                        onKeyframeSelect?(.annotation, keyframe.id)
+                    },
+                    onTimeChange: { newTime in
+                        onKeyframeChange?(keyframe.id, newTime)
+                    }
+                )
+                .opacity(isTimeInTrimRange(keyframe.time) ? 1.0 : 0.3)
+                .position(x: max(8, CGFloat(keyframe.time) * pixelsPerSecond), y: trackHeight / 2)
+            }
         }
     }
 
@@ -436,6 +459,8 @@ struct TimelineView: View {
             return "cursorarrow"
         case .keystroke:
             return "keyboard"
+        case .annotation:
+            return "text.bubble"
         case .audio:
             return "waveform"
         }

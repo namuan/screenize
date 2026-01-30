@@ -183,6 +183,7 @@ enum KeyframeColor {
     static let ripple = Color.purple
     static let cursor = Color.orange
     static let keystroke = Color.cyan
+    static let annotation = Color.mint
 
     static func color(for trackType: TrackType) -> Color {
         switch trackType {
@@ -194,6 +195,8 @@ enum KeyframeColor {
             return cursor
         case .keystroke:
             return keystroke
+        case .annotation:
+            return annotation
         case .audio:
             return Color.green  // Reserved for future audio track support
         }

@@ -72,7 +72,8 @@ struct Timeline: Codable, Equatable {
                 .transform(TransformTrack()),
                 .ripple(RippleTrack()),
                 .cursor(CursorTrack()),
-                .keystroke(KeystrokeTrack())
+                .keystroke(KeystrokeTrack()),
+                .annotation(AnnotationTrack())
             ],
             duration: duration,
             trimStart: trimStart,
@@ -158,6 +159,25 @@ struct Timeline: Codable, Equatable {
         }
     }
 
+    /// Annotation track (first)
+    var annotationTrack: AnnotationTrack? {
+        get {
+            for case .annotation(let track) in tracks {
+                return track
+            }
+            return nil
+        }
+        set {
+            if let newTrack = newValue {
+                if let index = tracks.firstIndex(where: { $0.trackType == .annotation }) {
+                    tracks[index] = .annotation(newTrack)
+                } else {
+                    tracks.append(.annotation(newTrack))
+                }
+            }
+        }
+    }
+
     // MARK: - Track Management
 
     /// Add a track
@@ -197,6 +217,8 @@ struct Timeline: Codable, Equatable {
                 count += t.styleKeyframes?.count ?? 0
             case .keystroke(let t):
                 count += t.keyframes.count
+            case .annotation(let t):
+                count += t.keyframes.count
             }
         }
         return count
@@ -220,6 +242,11 @@ struct Timeline: Codable, Equatable {
                     return true
                 }
             case .keystroke(let t):
+                if t.keyframes.contains(where: { range.contains($0.time) }) {
+                    return true
+                }
+
+            case .annotation(let t):
                 if t.keyframes.contains(where: { range.contains($0.time) }) {
                     return true
                 }

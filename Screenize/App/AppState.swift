@@ -376,6 +376,12 @@ final class AppState: ObservableObject {
                     name: "Keystroke",
                     isEnabled: true,
                     keyframes: []
+                )),
+                AnyTrack(AnnotationTrack(
+                    id: UUID(),
+                    name: "Annotation",
+                    isEnabled: true,
+                    keyframes: []
                 ))
             ],
             duration: videoMetadata.duration

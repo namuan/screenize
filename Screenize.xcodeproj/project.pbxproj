@@ -63,6 +63,7 @@
 		F0000079296A0001 /* MouseDataCleaner.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000079296A0001 /* MouseDataCleaner.swift */; };
 		F000007A296A0001 /* KeystrokeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100007A296A0001 /* KeystrokeGenerator.swift */; };
 		F000007B296A0001 /* KeystrokeInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100007B296A0001 /* KeystrokeInspector.swift */; };
+		F000007C296A0001 /* AnnotationInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100007C296A0001 /* AnnotationInspector.swift */; };
 		F0000080296A0001 /* EditorEntryPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000080296A0001 /* EditorEntryPoint.swift */; };
 		F0000081296A0001 /* ScreenizeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000081296A0001 /* ScreenizeApp.swift */; };
 		F0000090296A0001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F1000090296A0001 /* Assets.xcassets */; };
@@ -162,6 +163,7 @@
 		F1000079296A0001 /* MouseDataCleaner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseDataCleaner.swift; sourceTree = "<group>"; };
 		F100007A296A0001 /* KeystrokeGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeystrokeGenerator.swift; sourceTree = "<group>"; };
 		F100007B296A0001 /* KeystrokeInspector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeystrokeInspector.swift; sourceTree = "<group>"; };
+		F100007C296A0001 /* AnnotationInspector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationInspector.swift; sourceTree = "<group>"; };
 		F1000080296A0001 /* EditorEntryPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorEntryPoint.swift; sourceTree = "<group>"; };
 		F1000081296A0001 /* ScreenizeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenizeApp.swift; sourceTree = "<group>"; };
 		F1000090296A0001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -349,6 +351,7 @@
 				F1000042296A0001 /* RippleInspector.swift */,
 				F1000043296A0001 /* CursorInspector.swift */,
 				F100007B296A0001 /* KeystrokeInspector.swift */,
+				F100007C296A0001 /* AnnotationInspector.swift */,
 				F1000044296A0001 /* InspectorView.swift */,
 				F1000045296A0001 /* SettingsInspector.swift */,
 			);
@@ -608,6 +611,7 @@
 				F0000042296A0001 /* RippleInspector.swift in Sources */,
 				F0000043296A0001 /* CursorInspector.swift in Sources */,
 				F000007B296A0001 /* KeystrokeInspector.swift in Sources */,
+				F000007C296A0001 /* AnnotationInspector.swift in Sources */,
 				F0000044296A0001 /* InspectorView.swift in Sources */,
 				F0000045296A0001 /* SettingsInspector.swift in Sources */,
 				F0000050296A0001 /* PreviewView.swift in Sources */,
