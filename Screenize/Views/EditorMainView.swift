@@ -76,7 +76,7 @@ struct EditorMainView: View {
                         viewModel.setTrimRange(start: start, end: end)
                     }
                 )
-                .frame(height: 224)
+                .frame(height: TimelineView.preferredHeight(trackCount: viewModel.project.timeline.tracks.count))
             }
 
             // Right: inspector
@@ -149,7 +149,9 @@ struct EditorMainView: View {
             }
             .disabled(viewModel.project.timeline.transformTrack?.keyframes.isEmpty != false
                       && viewModel.project.timeline.rippleTrack?.keyframes.isEmpty != false
-                      && viewModel.project.timeline.cursorTrack?.styleKeyframes?.isEmpty != false)
+                      && viewModel.project.timeline.cursorTrack?.styleKeyframes?.isEmpty != false
+                      && viewModel.project.timeline.keystrokeTrack?.keyframes.isEmpty != false
+                      && viewModel.project.timeline.annotationTrack?.keyframes.isEmpty != false)
 
             Spacer()
 

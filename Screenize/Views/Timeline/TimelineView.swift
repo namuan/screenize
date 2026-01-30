@@ -66,8 +66,18 @@ struct TimelineView: View {
 
     private let minPixelsPerSecond: CGFloat = 10
     private let maxPixelsPerSecond: CGFloat = 200
-    private let rulerHeight: CGFloat = 24
-    private let trackHeight: CGFloat = 40
+    static let rulerHeight: CGFloat = 24
+    static let trackHeight: CGFloat = 40
+
+    /// Minimum height so all tracks are visible without vertical scrolling.
+    /// Falls back to the historical fixed height (224) for small track counts.
+    static func preferredHeight(trackCount: Int) -> CGFloat {
+        let dividerHeight: CGFloat = 1
+        let toolbarAndTopDivider: CGFloat = 33
+        let count = max(1, trackCount)
+        let geometryMinHeight = Self.rulerHeight + dividerHeight + CGFloat(count) * (Self.trackHeight + dividerHeight)
+        return max(224, toolbarAndTopDivider + geometryMinHeight)
+    }
 
     // MARK: - Body
 
@@ -123,7 +133,7 @@ struct TimelineView: View {
                                 pixelsPerSecond: pixelsPerSecond,
                                 scrollOffset: 0
                             )
-                            .offset(y: rulerHeight)
+                            .offset(y: Self.rulerHeight)
                         }
                         .frame(width: contentWidth)
                     }
@@ -217,7 +227,7 @@ struct TimelineView: View {
         VStack(spacing: 0) {
             // Spacer for the time ruler height
             Color.clear
-                .frame(height: rulerHeight)
+                .frame(height: Self.rulerHeight)
 
             Divider()
 
@@ -261,7 +271,7 @@ struct TimelineView: View {
             .buttonStyle(.plain)
         }
         .padding(.horizontal, 8)
-        .frame(height: trackHeight)
+        .frame(height: Self.trackHeight)
         .background(
             selectedTrackType == track.trackType
                 ? KeyframeColor.color(for: track.trackType).opacity(0.1)
@@ -293,7 +303,7 @@ struct TimelineView: View {
                 duration: duration,
                 pixelsPerSecond: pixelsPerSecond,
                 scrollOffset: 0,
-                height: trackHeight
+                height: Self.trackHeight
             )
             .opacity(track.isEnabled ? 1.0 : 0.5)
 
@@ -314,7 +324,7 @@ struct TimelineView: View {
             keyframeMarkers(for: track)
                 .opacity(track.isEnabled ? 1.0 : 0.5)
         }
-        .frame(height: trackHeight)
+        .frame(height: Self.trackHeight)
         .coordinateSpace(name: "trackContent")
         .background(
             selectedTrackType == track.trackType
@@ -348,7 +358,7 @@ struct TimelineView: View {
                     }
                 )
                 .opacity(isTimeInTrimRange(keyframe.time) ? 1.0 : 0.3)
-                .position(x: max(8, CGFloat(keyframe.time) * pixelsPerSecond), y: trackHeight / 2)
+                .position(x: max(8, CGFloat(keyframe.time) * pixelsPerSecond), y: Self.trackHeight / 2)
             }
 
         case .ripple(let rippleTrack):
@@ -371,7 +381,7 @@ struct TimelineView: View {
                     }
                 )
                 .opacity(isTimeInTrimRange(keyframe.time) ? 1.0 : 0.3)
-                .position(x: max(8, CGFloat(keyframe.time) * pixelsPerSecond), y: trackHeight / 2)
+                .position(x: max(8, CGFloat(keyframe.time) * pixelsPerSecond), y: Self.trackHeight / 2)
             }
 
         case .cursor(let cursorTrack):
@@ -395,7 +405,7 @@ struct TimelineView: View {
                         }
                     )
                     .opacity(isTimeInTrimRange(keyframe.time) ? 1.0 : 0.3)
-                    .position(x: max(8, CGFloat(keyframe.time) * pixelsPerSecond), y: trackHeight / 2)
+                    .position(x: max(8, CGFloat(keyframe.time) * pixelsPerSecond), y: Self.trackHeight / 2)
                 }
             }
 
@@ -419,7 +429,7 @@ struct TimelineView: View {
                     }
                 )
                 .opacity(isTimeInTrimRange(keyframe.time) ? 1.0 : 0.3)
-                .position(x: max(8, CGFloat(keyframe.time) * pixelsPerSecond), y: trackHeight / 2)
+                .position(x: max(8, CGFloat(keyframe.time) * pixelsPerSecond), y: Self.trackHeight / 2)
             }
 
         case .annotation(let annotationTrack):
@@ -442,7 +452,7 @@ struct TimelineView: View {
                     }
                 )
                 .opacity(isTimeInTrimRange(keyframe.time) ? 1.0 : 0.3)
-                .position(x: max(8, CGFloat(keyframe.time) * pixelsPerSecond), y: trackHeight / 2)
+                .position(x: max(8, CGFloat(keyframe.time) * pixelsPerSecond), y: Self.trackHeight / 2)
             }
         }
     }
@@ -561,7 +571,7 @@ struct TimelineView: View {
                     )
             }
         }
-        .offset(y: rulerHeight) // Position below the ruler
+        .offset(y: Self.rulerHeight) // Position below the ruler
     }
 
     /// Check whether a given time falls within the trim range
