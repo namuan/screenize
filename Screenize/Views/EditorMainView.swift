@@ -291,6 +291,30 @@ struct EditorMainView: View {
             } label: {
                 Label("Arrow Annotation", systemImage: "arrow.up.right")
             }
+
+            Button {
+                viewModel.addAnnotationKeyframe(type: .line)
+            } label: {
+                Label("Line Annotation", systemImage: "line.diagonal")
+            }
+
+            Button {
+                viewModel.addAnnotationKeyframe(type: .rectangle)
+            } label: {
+                Label("Rectangle Annotation", systemImage: "rectangle")
+            }
+
+            Button {
+                viewModel.addAnnotationKeyframe(type: .ellipse)
+            } label: {
+                Label("Ellipse Annotation", systemImage: "capsule")
+            }
+
+            Button {
+                viewModel.addAnnotationKeyframe(type: .circle)
+            } label: {
+                Label("Circle Annotation", systemImage: "circle")
+            }
         } label: {
             Label("Add Keyframe", systemImage: "plus.diamond")
         }

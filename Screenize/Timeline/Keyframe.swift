@@ -466,11 +466,19 @@ struct KeystrokeKeyframe: TimedKeyframe, Equatable {
 enum AnnotationType: String, Codable, CaseIterable {
     case text
     case arrow
+    case line
+    case rectangle
+    case ellipse
+    case circle
 
     var displayName: String {
         switch self {
         case .text: return "Text"
         case .arrow: return "Arrow"
+        case .line: return "Line"
+        case .rectangle: return "Rectangle"
+        case .ellipse: return "Ellipse"
+        case .circle: return "Circle"
         }
     }
 }

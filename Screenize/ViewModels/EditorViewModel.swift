@@ -563,6 +563,10 @@ final class EditorViewModel: ObservableObject {
             newKeyframe = AnnotationKeyframe(time: time, type: .text, text: "Note")
         case .arrow:
             newKeyframe = AnnotationKeyframe(time: time, type: .arrow, text: "")
+        case .line:
+            newKeyframe = AnnotationKeyframe(time: time, type: .line, text: "")
+        case .rectangle, .ellipse, .circle:
+            newKeyframe = AnnotationKeyframe(time: time, type: type, text: "")
         }
 
         track.keyframes.append(newKeyframe)

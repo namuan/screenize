@@ -266,6 +266,14 @@ final class EffectCompositor {
                 image = renderSingleTextAnnotation(annotation, frameSize: frameSize)
             case .arrow:
                 image = renderSingleArrowAnnotation(annotation, frameSize: frameSize)
+            case .line:
+                image = renderSingleLineAnnotation(annotation, frameSize: frameSize)
+            case .rectangle:
+                image = renderSingleRectangleAnnotation(annotation, frameSize: frameSize)
+            case .ellipse:
+                image = renderSingleEllipseAnnotation(annotation, frameSize: frameSize)
+            case .circle:
+                image = renderSingleCircleAnnotation(annotation, frameSize: frameSize)
             }
 
             guard let image else { continue }
@@ -286,8 +294,12 @@ final class EffectCompositor {
             return !annotation.text
                 .trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
                 .isEmpty
-        case .arrow:
+        case .arrow, .line:
             return annotation.arrowStart.distance(to: annotation.arrowEnd) > 0.001
+        case .rectangle, .ellipse, .circle:
+            let w = abs(annotation.arrowStart.x - annotation.arrowEnd.x)
+            let h = abs(annotation.arrowStart.y - annotation.arrowEnd.y)
+            return w > 0.001 && h > 0.001
         }
     }
 
@@ -476,6 +488,210 @@ final class EffectCompositor {
         context.addLine(to: right)
         context.closePath()
         context.fillPath()
+
+        guard let cgImage = context.makeImage() else { return nil }
+        var ciImage = CIImage(cgImage: cgImage)
+        ciImage = ciImage.transformed(by: CGAffineTransform(translationX: bbox.origin.x, y: bbox.origin.y))
+        ciImage = ciImage.cropped(to: CGRect(origin: .zero, size: frameSize))
+        return ciImage
+    }
+
+    private func renderSingleLineAnnotation(_ annotation: ActiveAnnotation, frameSize: CGSize) -> CIImage? {
+        // Convert from UI normalized (top-left origin) to CoreImage pixel space (bottom-left origin)
+        let start = CGPoint(
+            x: annotation.arrowStart.x * frameSize.width,
+            y: (1.0 - annotation.arrowStart.y) * frameSize.height
+        )
+        let end = CGPoint(
+            x: annotation.arrowEnd.x * frameSize.width,
+            y: (1.0 - annotation.arrowEnd.y) * frameSize.height
+        )
+
+        let dx = end.x - start.x
+        let dy = end.y - start.y
+        let length = hypot(dx, dy)
+        guard length >= 2 else { return nil }
+
+        let lineWidth = max(2, frameSize.height * annotation.arrowLineWidthScale)
+        let shadowBlur = max(2, lineWidth * 1.2)
+        let pad = lineWidth + shadowBlur * 2 + 6
+
+        let minX = min(start.x, end.x)
+        let minY = min(start.y, end.y)
+        let maxX = max(start.x, end.x)
+        let maxY = max(start.y, end.y)
+        let bbox = CGRect(
+            x: minX - pad,
+            y: minY - pad,
+            width: (maxX - minX) + pad * 2,
+            height: (maxY - minY) + pad * 2
+        )
+
+        let bitmapWidth = Int(ceil(bbox.width))
+        let bitmapHeight = Int(ceil(bbox.height))
+        guard bitmapWidth > 0, bitmapHeight > 0 else { return nil }
+
+        guard let context = CGContext(
+            data: nil,
+            width: bitmapWidth,
+            height: bitmapHeight,
+            bitsPerComponent: 8,
+            bytesPerRow: bitmapWidth * 4,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return nil }
+
+        context.setAllowsAntialiasing(true)
+        context.setShouldAntialias(true)
+
+        // Translate so bbox.origin becomes (0,0)
+        context.translateBy(x: -bbox.origin.x, y: -bbox.origin.y)
+
+        let mainColor = annotation.arrowColor.multipliedAlpha(annotation.opacity).cgColor
+        let outlineColor = CGColor(gray: 0, alpha: 0.55 * annotation.opacity)
+        let shadowColor = CGColor(gray: 0, alpha: 0.35 * annotation.opacity)
+
+        // Shadow + outline layer
+        context.setShadow(offset: CGSize(width: 0, height: -2), blur: shadowBlur, color: shadowColor)
+        context.setStrokeColor(outlineColor)
+        context.setLineWidth(lineWidth + 2)
+        context.setLineCap(.round)
+        context.setLineJoin(.round)
+
+        context.beginPath()
+        context.move(to: start)
+        context.addLine(to: end)
+        context.strokePath()
+
+        // Main line layer
+        context.setShadow(offset: .zero, blur: 0, color: nil)
+        context.setStrokeColor(mainColor)
+        context.setLineWidth(lineWidth)
+        context.setLineCap(.round)
+        context.setLineJoin(.round)
+
+        context.beginPath()
+        context.move(to: start)
+        context.addLine(to: end)
+        context.strokePath()
+
+        guard let cgImage = context.makeImage() else { return nil }
+        var ciImage = CIImage(cgImage: cgImage)
+        ciImage = ciImage.transformed(by: CGAffineTransform(translationX: bbox.origin.x, y: bbox.origin.y))
+        ciImage = ciImage.cropped(to: CGRect(origin: .zero, size: frameSize))
+        return ciImage
+    }
+
+    private enum AnnotationShapeKind {
+        case rectangle
+        case ellipse
+        case circle
+    }
+
+    private func renderSingleRectangleAnnotation(_ annotation: ActiveAnnotation, frameSize: CGSize) -> CIImage? {
+        renderSingleShapeAnnotation(annotation, frameSize: frameSize, kind: .rectangle)
+    }
+
+    private func renderSingleEllipseAnnotation(_ annotation: ActiveAnnotation, frameSize: CGSize) -> CIImage? {
+        renderSingleShapeAnnotation(annotation, frameSize: frameSize, kind: .ellipse)
+    }
+
+    private func renderSingleCircleAnnotation(_ annotation: ActiveAnnotation, frameSize: CGSize) -> CIImage? {
+        renderSingleShapeAnnotation(annotation, frameSize: frameSize, kind: .circle)
+    }
+
+    private func renderSingleShapeAnnotation(
+        _ annotation: ActiveAnnotation,
+        frameSize: CGSize,
+        kind: AnnotationShapeKind
+    ) -> CIImage? {
+        // Convert from UI normalized (top-left origin) to CoreImage pixel space (bottom-left origin)
+        let p1 = CGPoint(
+            x: annotation.arrowStart.x * frameSize.width,
+            y: (1.0 - annotation.arrowStart.y) * frameSize.height
+        )
+        let p2 = CGPoint(
+            x: annotation.arrowEnd.x * frameSize.width,
+            y: (1.0 - annotation.arrowEnd.y) * frameSize.height
+        )
+
+        let minX = min(p1.x, p2.x)
+        let minY = min(p1.y, p2.y)
+        let maxX = max(p1.x, p2.x)
+        let maxY = max(p1.y, p2.y)
+        var rect = CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
+        guard rect.width >= 2, rect.height >= 2 else { return nil }
+
+        if kind == .circle {
+            let side = min(rect.width, rect.height)
+            rect = CGRect(
+                x: rect.midX - side / 2,
+                y: rect.midY - side / 2,
+                width: side,
+                height: side
+            )
+        }
+
+        let lineWidth = max(2, frameSize.height * annotation.arrowLineWidthScale)
+        let shadowBlur = max(2, lineWidth * 1.2)
+        let pad = lineWidth + shadowBlur * 2 + 6
+        let bbox = rect.insetBy(dx: -pad, dy: -pad)
+
+        let bitmapWidth = Int(ceil(bbox.width))
+        let bitmapHeight = Int(ceil(bbox.height))
+        guard bitmapWidth > 0, bitmapHeight > 0 else { return nil }
+
+        guard let context = CGContext(
+            data: nil,
+            width: bitmapWidth,
+            height: bitmapHeight,
+            bitsPerComponent: 8,
+            bytesPerRow: bitmapWidth * 4,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return nil }
+
+        context.setAllowsAntialiasing(true)
+        context.setShouldAntialias(true)
+
+        // Translate so bbox.origin becomes (0,0)
+        context.translateBy(x: -bbox.origin.x, y: -bbox.origin.y)
+
+        let mainColor = annotation.arrowColor.multipliedAlpha(annotation.opacity).cgColor
+        let outlineColor = CGColor(gray: 0, alpha: 0.55 * annotation.opacity)
+        let shadowColor = CGColor(gray: 0, alpha: 0.35 * annotation.opacity)
+
+        // Shadow + outline layer
+        context.setShadow(offset: CGSize(width: 0, height: -2), blur: shadowBlur, color: shadowColor)
+        context.setStrokeColor(outlineColor)
+        context.setLineWidth(lineWidth + 2)
+        context.setLineCap(.round)
+        context.setLineJoin(.round)
+
+        switch kind {
+        case .rectangle:
+            context.beginPath()
+            context.addRect(rect)
+            context.strokePath()
+        case .ellipse, .circle:
+            context.strokeEllipse(in: rect)
+        }
+
+        // Main shape layer
+        context.setShadow(offset: .zero, blur: 0, color: nil)
+        context.setStrokeColor(mainColor)
+        context.setLineWidth(lineWidth)
+        context.setLineCap(.round)
+        context.setLineJoin(.round)
+
+        switch kind {
+        case .rectangle:
+            context.beginPath()
+            context.addRect(rect)
+            context.strokePath()
+        case .ellipse, .circle:
+            context.strokeEllipse(in: rect)
+        }
 
         guard let cgImage = context.makeImage() else { return nil }
         var ciImage = CIImage(cgImage: cgImage)

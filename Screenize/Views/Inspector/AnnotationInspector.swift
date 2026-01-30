@@ -30,11 +30,7 @@ struct AnnotationInspector: View {
 
             Divider()
 
-            if keyframe.type == .text {
-                positionSection
-            } else {
-                arrowPointsSection
-            }
+            geometrySection
 
             Spacer()
         }
@@ -43,7 +39,7 @@ struct AnnotationInspector: View {
 
     private var header: some View {
         HStack {
-            Image(systemName: keyframe.type == .text ? "text.bubble" : "arrow.up.right")
+            Image(systemName: icon(for: keyframe.type))
                 .foregroundColor(KeyframeColor.annotation)
 
             Text("Annotation Keyframe")
@@ -61,10 +57,10 @@ struct AnnotationInspector: View {
 
             Picker("", selection: $keyframe.type) {
                 ForEach(AnnotationType.allCases, id: \.self) { type in
-                    Text(type.displayName).tag(type)
+                    Label(type.displayName, systemImage: icon(for: type)).tag(type)
                 }
             }
-            .pickerStyle(.segmented)
+            .pickerStyle(.menu)
             .onChange(of: keyframe.type) { _ in onChange?() }
         }
     }
@@ -170,20 +166,22 @@ struct AnnotationInspector: View {
                     Slider(value: $keyframe.arrowLineWidthScale, in: 0.002...0.03, step: 0.001)
                         .onChange(of: keyframe.arrowLineWidthScale) { _ in onChange?() }
 
-                    HStack {
-                        Text("Head")
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(.secondary)
+                    if keyframe.type == .arrow {
+                        HStack {
+                            Text("Head")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(.secondary)
 
-                        Spacer()
+                            Spacer()
 
-                        Text(String(format: "%.1f%%", keyframe.arrowHeadScale * 100))
-                            .font(.system(size: 11, design: .monospaced))
-                            .foregroundColor(.secondary)
+                            Text(String(format: "%.1f%%", keyframe.arrowHeadScale * 100))
+                                .font(.system(size: 11, design: .monospaced))
+                                .foregroundColor(.secondary)
+                        }
+
+                        Slider(value: $keyframe.arrowHeadScale, in: 0.01...0.10, step: 0.005)
+                            .onChange(of: keyframe.arrowHeadScale) { _ in onChange?() }
                     }
-
-                    Slider(value: $keyframe.arrowHeadScale, in: 0.01...0.10, step: 0.005)
-                        .onChange(of: keyframe.arrowHeadScale) { _ in onChange?() }
                 }
             }
 
@@ -236,14 +234,28 @@ struct AnnotationInspector: View {
         )
     }
 
-    private var arrowPointsSection: some View {
+    @ViewBuilder
+    private var geometrySection: some View {
+        switch keyframe.type {
+        case .text:
+            positionSection
+        case .arrow:
+            twoPointSection(sectionTitle: "Arrow Points", startTitle: "Start", endTitle: "End")
+        case .line:
+            twoPointSection(sectionTitle: "Line Points", startTitle: "Start", endTitle: "End")
+        case .rectangle, .ellipse, .circle:
+            twoPointSection(sectionTitle: "Bounds", startTitle: "Corner 1", endTitle: "Corner 2")
+        }
+    }
+
+    private func twoPointSection(sectionTitle: String, startTitle: String, endTitle: String) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Arrow Points")
+            Text(sectionTitle)
                 .font(.system(size: 11, weight: .medium))
                 .foregroundColor(.secondary)
 
             pointSection(
-                title: "Start",
+                title: startTitle,
                 x: Binding(
                     get: { keyframe.arrowStart.x },
                     set: { keyframe.arrowStart = NormalizedPoint(x: $0, y: keyframe.arrowStart.y); onChange?() }
@@ -256,7 +268,7 @@ struct AnnotationInspector: View {
             )
 
             pointSection(
-                title: "End",
+                title: endTitle,
                 x: Binding(
                     get: { keyframe.arrowEnd.x },
                     set: { keyframe.arrowEnd = NormalizedPoint(x: $0, y: keyframe.arrowEnd.y); onChange?() }
@@ -267,6 +279,23 @@ struct AnnotationInspector: View {
                 ),
                 color: keyframe.arrowColor.color
             )
+        }
+    }
+
+    private func icon(for type: AnnotationType) -> String {
+        switch type {
+        case .text:
+            return "text.bubble"
+        case .arrow:
+            return "arrow.up.right"
+        case .line:
+            return "line.diagonal"
+        case .rectangle:
+            return "rectangle"
+        case .ellipse:
+            return "capsule"
+        case .circle:
+            return "circle"
         }
     }
 
