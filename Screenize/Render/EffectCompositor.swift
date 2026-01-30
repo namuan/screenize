@@ -384,7 +384,9 @@ final class EffectCompositor {
         guard length >= 2 else { return nil }
 
         let lineWidth = max(2, frameSize.height * annotation.arrowLineWidthScale)
-        let headLength = max(lineWidth * 4, frameSize.height * annotation.arrowHeadScale)
+        // Clamp head size so short arrows still look sane.
+        let desiredHeadLength = max(lineWidth * 4, frameSize.height * annotation.arrowHeadScale)
+        let headLength = min(desiredHeadLength, max(lineWidth * 2, length * 0.7))
         let headWidth = headLength * 0.9
         let shadowBlur = max(2, lineWidth * 1.2)
         let pad = max(headLength, lineWidth) + shadowBlur * 2 + 6
@@ -426,9 +428,10 @@ final class EffectCompositor {
         let py = ux
 
         let tip = end
-        let base = CGPoint(x: end.x - ux * headLength, y: end.y - uy * headLength)
-        let left = CGPoint(x: base.x + px * (headWidth / 2), y: base.y + py * (headWidth / 2))
-        let right = CGPoint(x: base.x - px * (headWidth / 2), y: base.y - py * (headWidth / 2))
+        // Draw the shaft to the base of the head so the stroke doesn't protrude past the tip.
+        let shaftEnd = CGPoint(x: end.x - ux * headLength, y: end.y - uy * headLength)
+        let left = CGPoint(x: shaftEnd.x + px * (headWidth / 2), y: shaftEnd.y + py * (headWidth / 2))
+        let right = CGPoint(x: shaftEnd.x - px * (headWidth / 2), y: shaftEnd.y - py * (headWidth / 2))
 
         let mainColor = annotation.arrowColor.multipliedAlpha(annotation.opacity).cgColor
         let outlineColor = CGColor(gray: 0, alpha: 0.55 * annotation.opacity)
@@ -444,7 +447,7 @@ final class EffectCompositor {
 
         context.beginPath()
         context.move(to: start)
-        context.addLine(to: end)
+        context.addLine(to: shaftEnd)
         context.strokePath()
 
         context.beginPath()
@@ -464,7 +467,7 @@ final class EffectCompositor {
 
         context.beginPath()
         context.move(to: start)
-        context.addLine(to: end)
+        context.addLine(to: shaftEnd)
         context.strokePath()
 
         context.beginPath()
