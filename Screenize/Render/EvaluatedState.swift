@@ -308,28 +308,63 @@ struct ActiveKeystroke {
 
 // MARK: - Active Annotation
 
-/// Currently active text annotation
+/// Currently active annotation (text/arrow)
 struct ActiveAnnotation {
-    let text: String
+    let type: AnnotationType
     let opacity: CGFloat
     let progress: CGFloat
+
+    // Text
+    let text: String
     let position: NormalizedPoint
     let fontScale: CGFloat
 
-    init(text: String, opacity: CGFloat, progress: CGFloat, position: NormalizedPoint, fontScale: CGFloat) {
+    // Arrow
+    let arrowStart: NormalizedPoint
+    let arrowEnd: NormalizedPoint
+    let arrowColor: RGBAColor
+    let arrowLineWidthScale: CGFloat
+    let arrowHeadScale: CGFloat
+
+    init(
+        type: AnnotationType,
+        text: String,
+        opacity: CGFloat,
+        progress: CGFloat,
+        position: NormalizedPoint,
+        fontScale: CGFloat,
+        arrowStart: NormalizedPoint,
+        arrowEnd: NormalizedPoint,
+        arrowColor: RGBAColor,
+        arrowLineWidthScale: CGFloat,
+        arrowHeadScale: CGFloat
+    ) {
+        self.type = type
         self.text = text
         self.opacity = max(0, min(1, opacity))
         self.progress = max(0, min(1, progress))
         self.position = position
         self.fontScale = max(0.015, min(0.12, fontScale))
+
+        self.arrowStart = arrowStart
+        self.arrowEnd = arrowEnd
+        self.arrowColor = arrowColor
+        self.arrowLineWidthScale = max(0.001, min(0.05, arrowLineWidthScale))
+        self.arrowHeadScale = max(0.005, min(0.2, arrowHeadScale))
     }
 
     init(from keyframe: AnnotationKeyframe, at time: TimeInterval) {
+        self.type = keyframe.type
         self.text = keyframe.text
         self.opacity = keyframe.opacity(at: time)
         self.progress = keyframe.progress(at: time)
         self.position = keyframe.position
         self.fontScale = keyframe.fontScale
+        self.arrowStart = keyframe.arrowStart
+        self.arrowEnd = keyframe.arrowEnd
+        self.arrowColor = keyframe.arrowColor
+        self.arrowLineWidthScale = keyframe.arrowLineWidthScale
+        self.arrowHeadScale = keyframe.arrowHeadScale
     }
 }
 

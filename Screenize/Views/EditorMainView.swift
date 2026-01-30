@@ -281,9 +281,15 @@ struct EditorMainView: View {
             }
 
             Button {
-                viewModel.addKeyframe(to: .annotation)
+                viewModel.addAnnotationKeyframe(type: .text)
             } label: {
-                Label("Annotation Keyframe", systemImage: "text.bubble")
+                Label("Text Annotation", systemImage: "text.bubble")
+            }
+
+            Button {
+                viewModel.addAnnotationKeyframe(type: .arrow)
+            } label: {
+                Label("Arrow Annotation", systemImage: "arrow.up.right")
             }
         } label: {
             Label("Add Keyframe", systemImage: "plus.diamond")

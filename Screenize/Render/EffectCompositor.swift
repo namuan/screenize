@@ -255,12 +255,20 @@ final class EffectCompositor {
     // MARK: - Annotation Overlay Rendering
 
     func renderAnnotationOverlay(_ annotations: [ActiveAnnotation], frameSize: CGSize) -> CIImage? {
-        let visible = annotations.filter { !$0.text.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).isEmpty && $0.opacity > 0 }
+        let visible = annotations.filter { isRenderableAnnotation($0) }
         guard !visible.isEmpty else { return nil }
 
         var result: CIImage?
         for annotation in visible {
-            guard let image = renderSingleAnnotation(annotation, frameSize: frameSize) else { continue }
+            let image: CIImage?
+            switch annotation.type {
+            case .text:
+                image = renderSingleTextAnnotation(annotation, frameSize: frameSize)
+            case .arrow:
+                image = renderSingleArrowAnnotation(annotation, frameSize: frameSize)
+            }
+
+            guard let image else { continue }
             if let existing = result {
                 result = image.composited(over: existing)
             } else {
@@ -270,7 +278,20 @@ final class EffectCompositor {
         return result
     }
 
-    private func renderSingleAnnotation(_ annotation: ActiveAnnotation, frameSize: CGSize) -> CIImage? {
+    private func isRenderableAnnotation(_ annotation: ActiveAnnotation) -> Bool {
+        guard annotation.opacity > 0 else { return false }
+
+        switch annotation.type {
+        case .text:
+            return !annotation.text
+                .trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+                .isEmpty
+        case .arrow:
+            return annotation.arrowStart.distance(to: annotation.arrowEnd) > 0.001
+        }
+    }
+
+    private func renderSingleTextAnnotation(_ annotation: ActiveAnnotation, frameSize: CGSize) -> CIImage? {
         let baseFontSize: CGFloat = max(16, frameSize.height * annotation.fontScale)
         let font = NSFont.systemFont(ofSize: baseFontSize, weight: .semibold)
         let cornerRadius: CGFloat = baseFontSize * 0.55
@@ -342,6 +363,120 @@ final class EffectCompositor {
         let posX = annotation.position.x * frameSize.width - CGFloat(bitmapWidth) / 2
         let posY = (1.0 - annotation.position.y) * frameSize.height - CGFloat(bitmapHeight) / 2
         ciImage = ciImage.transformed(by: CGAffineTransform(translationX: posX, y: posY))
+        ciImage = ciImage.cropped(to: CGRect(origin: .zero, size: frameSize))
+        return ciImage
+    }
+
+    private func renderSingleArrowAnnotation(_ annotation: ActiveAnnotation, frameSize: CGSize) -> CIImage? {
+        // Convert from UI normalized (top-left origin) to CoreImage pixel space (bottom-left origin)
+        let start = CGPoint(
+            x: annotation.arrowStart.x * frameSize.width,
+            y: (1.0 - annotation.arrowStart.y) * frameSize.height
+        )
+        let end = CGPoint(
+            x: annotation.arrowEnd.x * frameSize.width,
+            y: (1.0 - annotation.arrowEnd.y) * frameSize.height
+        )
+
+        let dx = end.x - start.x
+        let dy = end.y - start.y
+        let length = hypot(dx, dy)
+        guard length >= 2 else { return nil }
+
+        let lineWidth = max(2, frameSize.height * annotation.arrowLineWidthScale)
+        let headLength = max(lineWidth * 4, frameSize.height * annotation.arrowHeadScale)
+        let headWidth = headLength * 0.9
+        let shadowBlur = max(2, lineWidth * 1.2)
+        let pad = max(headLength, lineWidth) + shadowBlur * 2 + 6
+
+        let minX = min(start.x, end.x)
+        let minY = min(start.y, end.y)
+        let maxX = max(start.x, end.x)
+        let maxY = max(start.y, end.y)
+        let bbox = CGRect(
+            x: minX - pad,
+            y: minY - pad,
+            width: (maxX - minX) + pad * 2,
+            height: (maxY - minY) + pad * 2
+        )
+
+        let bitmapWidth = Int(ceil(bbox.width))
+        let bitmapHeight = Int(ceil(bbox.height))
+        guard bitmapWidth > 0, bitmapHeight > 0 else { return nil }
+
+        guard let context = CGContext(
+            data: nil,
+            width: bitmapWidth,
+            height: bitmapHeight,
+            bitsPerComponent: 8,
+            bytesPerRow: bitmapWidth * 4,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return nil }
+
+        context.setAllowsAntialiasing(true)
+        context.setShouldAntialias(true)
+
+        // Translate so bbox.origin becomes (0,0)
+        context.translateBy(x: -bbox.origin.x, y: -bbox.origin.y)
+
+        let ux = dx / length
+        let uy = dy / length
+        let px = -uy
+        let py = ux
+
+        let tip = end
+        let base = CGPoint(x: end.x - ux * headLength, y: end.y - uy * headLength)
+        let left = CGPoint(x: base.x + px * (headWidth / 2), y: base.y + py * (headWidth / 2))
+        let right = CGPoint(x: base.x - px * (headWidth / 2), y: base.y - py * (headWidth / 2))
+
+        let mainColor = annotation.arrowColor.multipliedAlpha(annotation.opacity).cgColor
+        let outlineColor = CGColor(gray: 0, alpha: 0.55 * annotation.opacity)
+        let shadowColor = CGColor(gray: 0, alpha: 0.35 * annotation.opacity)
+
+        // Shadow + outline layer
+        context.setShadow(offset: CGSize(width: 0, height: -2), blur: shadowBlur, color: shadowColor)
+        context.setStrokeColor(outlineColor)
+        context.setFillColor(outlineColor)
+        context.setLineWidth(lineWidth + 2)
+        context.setLineCap(.round)
+        context.setLineJoin(.round)
+
+        context.beginPath()
+        context.move(to: start)
+        context.addLine(to: end)
+        context.strokePath()
+
+        context.beginPath()
+        context.move(to: tip)
+        context.addLine(to: left)
+        context.addLine(to: right)
+        context.closePath()
+        context.fillPath()
+
+        // Main arrow layer
+        context.setShadow(offset: .zero, blur: 0, color: nil)
+        context.setStrokeColor(mainColor)
+        context.setFillColor(mainColor)
+        context.setLineWidth(lineWidth)
+        context.setLineCap(.round)
+        context.setLineJoin(.round)
+
+        context.beginPath()
+        context.move(to: start)
+        context.addLine(to: end)
+        context.strokePath()
+
+        context.beginPath()
+        context.move(to: tip)
+        context.addLine(to: left)
+        context.addLine(to: right)
+        context.closePath()
+        context.fillPath()
+
+        guard let cgImage = context.makeImage() else { return nil }
+        var ciImage = CIImage(cgImage: cgImage)
+        ciImage = ciImage.transformed(by: CGAffineTransform(translationX: bbox.origin.x, y: bbox.origin.y))
         ciImage = ciImage.cropped(to: CGRect(origin: .zero, size: frameSize))
         return ciImage
     }

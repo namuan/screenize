@@ -16,15 +16,25 @@ struct AnnotationInspector: View {
 
             Divider()
 
-            textSection
+            typeSection
 
             Divider()
+
+            if keyframe.type == .text {
+                textSection
+
+                Divider()
+            }
 
             styleSection
 
             Divider()
 
-            positionSection
+            if keyframe.type == .text {
+                positionSection
+            } else {
+                arrowPointsSection
+            }
 
             Spacer()
         }
@@ -33,13 +43,29 @@ struct AnnotationInspector: View {
 
     private var header: some View {
         HStack {
-            Image(systemName: "text.bubble")
+            Image(systemName: keyframe.type == .text ? "text.bubble" : "arrow.up.right")
                 .foregroundColor(KeyframeColor.annotation)
 
             Text("Annotation Keyframe")
                 .font(.headline)
 
             Spacer()
+        }
+    }
+
+    private var typeSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Type")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.secondary)
+
+            Picker("", selection: $keyframe.type) {
+                ForEach(AnnotationType.allCases, id: \.self) { type in
+                    Text(type.displayName).tag(type)
+                }
+            }
+            .pickerStyle(.segmented)
+            .onChange(of: keyframe.type) { _ in onChange?() }
         }
     }
 
@@ -102,20 +128,64 @@ struct AnnotationInspector: View {
                     .frame(width: 50)
             }
 
-            HStack {
-                Text("Size")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.secondary)
+            if keyframe.type == .text {
+                HStack {
+                    Text("Size")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.secondary)
 
-                Spacer()
+                    Spacer()
 
-                Text("\(Int(keyframe.fontScale * 100))%")
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundColor(.secondary)
+                    Text("\(Int(keyframe.fontScale * 100))%")
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundColor(.secondary)
+                }
+
+                Slider(value: $keyframe.fontScale, in: 0.02...0.10, step: 0.005)
+                    .onChange(of: keyframe.fontScale) { _ in onChange?() }
+            } else {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Text("Color")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(.secondary)
+
+                        Spacer()
+                    }
+
+                    ArrowColorPicker(color: $keyframe.arrowColor, onChange: onChange)
+
+                    HStack {
+                        Text("Line")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(.secondary)
+
+                        Spacer()
+
+                        Text(String(format: "%.1f%%", keyframe.arrowLineWidthScale * 100))
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundColor(.secondary)
+                    }
+
+                    Slider(value: $keyframe.arrowLineWidthScale, in: 0.002...0.03, step: 0.001)
+                        .onChange(of: keyframe.arrowLineWidthScale) { _ in onChange?() }
+
+                    HStack {
+                        Text("Head")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(.secondary)
+
+                        Spacer()
+
+                        Text(String(format: "%.1f%%", keyframe.arrowHeadScale * 100))
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundColor(.secondary)
+                    }
+
+                    Slider(value: $keyframe.arrowHeadScale, in: 0.01...0.10, step: 0.005)
+                        .onChange(of: keyframe.arrowHeadScale) { _ in onChange?() }
+                }
             }
-
-            Slider(value: $keyframe.fontScale, in: 0.02...0.10, step: 0.005)
-                .onChange(of: keyframe.fontScale) { _ in onChange?() }
 
             VStack(spacing: 6) {
                 HStack {
@@ -152,24 +222,67 @@ struct AnnotationInspector: View {
     }
 
     private var positionSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Position")
+        pointSection(
+            title: "Position",
+            x: Binding(
+                get: { keyframe.position.x },
+                set: { keyframe.position = NormalizedPoint(x: $0, y: keyframe.position.y); onChange?() }
+            ),
+            y: Binding(
+                get: { keyframe.position.y },
+                set: { keyframe.position = NormalizedPoint(x: keyframe.position.x, y: $0); onChange?() }
+            ),
+            color: KeyframeColor.annotation
+        )
+    }
+
+    private var arrowPointsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Arrow Points")
                 .font(.system(size: 11, weight: .medium))
                 .foregroundColor(.secondary)
 
-            PositionPicker(
+            pointSection(
+                title: "Start",
                 x: Binding(
-                    get: { keyframe.position.x },
-                    set: { keyframe.position = NormalizedPoint(x: $0, y: keyframe.position.y); onChange?() }
+                    get: { keyframe.arrowStart.x },
+                    set: { keyframe.arrowStart = NormalizedPoint(x: $0, y: keyframe.arrowStart.y); onChange?() }
                 ),
                 y: Binding(
-                    get: { keyframe.position.y },
-                    set: { keyframe.position = NormalizedPoint(x: keyframe.position.x, y: $0); onChange?() }
+                    get: { keyframe.arrowStart.y },
+                    set: { keyframe.arrowStart = NormalizedPoint(x: keyframe.arrowStart.x, y: $0); onChange?() }
                 ),
-                color: KeyframeColor.annotation,
-                onChange: onChange
+                color: Color.gray
             )
-            .frame(height: 100)
+
+            pointSection(
+                title: "End",
+                x: Binding(
+                    get: { keyframe.arrowEnd.x },
+                    set: { keyframe.arrowEnd = NormalizedPoint(x: $0, y: keyframe.arrowEnd.y); onChange?() }
+                ),
+                y: Binding(
+                    get: { keyframe.arrowEnd.y },
+                    set: { keyframe.arrowEnd = NormalizedPoint(x: keyframe.arrowEnd.x, y: $0); onChange?() }
+                ),
+                color: keyframe.arrowColor.color
+            )
+        }
+    }
+
+    private func pointSection(
+        title: String,
+        x: Binding<CGFloat>,
+        y: Binding<CGFloat>,
+        color: Color
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.secondary)
+
+            PositionPicker(x: x, y: y, color: color, onChange: onChange)
+                .frame(height: 80)
 
             VStack(spacing: 8) {
                 HStack {
@@ -178,14 +291,11 @@ struct AnnotationInspector: View {
                         .foregroundColor(.secondary)
                         .frame(width: 16)
 
-                    Slider(value: Binding(
-                        get: { keyframe.position.x },
-                        set: { keyframe.position = NormalizedPoint(x: $0, y: keyframe.position.y); onChange?() }
-                    ), in: 0...1)
+                    Slider(value: x, in: 0...1)
 
                     TextField("", value: Binding(
-                        get: { Double(keyframe.position.x) },
-                        set: { keyframe.position = NormalizedPoint(x: CGFloat($0), y: keyframe.position.y); onChange?() }
+                        get: { Double(x.wrappedValue) },
+                        set: { x.wrappedValue = CGFloat($0); onChange?() }
                     ), format: .number.precision(.fractionLength(2)))
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 50)
@@ -197,20 +307,58 @@ struct AnnotationInspector: View {
                         .foregroundColor(.secondary)
                         .frame(width: 16)
 
-                    Slider(value: Binding(
-                        get: { keyframe.position.y },
-                        set: { keyframe.position = NormalizedPoint(x: keyframe.position.x, y: $0); onChange?() }
-                    ), in: 0...1)
+                    Slider(value: y, in: 0...1)
 
                     TextField("", value: Binding(
-                        get: { Double(keyframe.position.y) },
-                        set: { keyframe.position = NormalizedPoint(x: keyframe.position.x, y: CGFloat($0)); onChange?() }
+                        get: { Double(y.wrappedValue) },
+                        set: { y.wrappedValue = CGFloat($0); onChange?() }
                     ), format: .number.precision(.fractionLength(2)))
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 50)
                 }
             }
         }
+    }
+}
+
+private struct ArrowColorPicker: View {
+    @Binding var color: RGBAColor
+    var onChange: (() -> Void)?
+
+    private let presets: [RGBAColor] = [.yellow, .red, .blue, .white]
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(presets, id: \.self) { preset in
+                colorButton(for: preset)
+            }
+        }
+    }
+
+    private func colorButton(for preset: RGBAColor) -> some View {
+        let isSelected = color == preset
+
+        return Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                color = preset
+            }
+            onChange?()
+        } label: {
+            Circle()
+                .fill(preset.color)
+                .frame(width: 24, height: 24)
+                .overlay(
+                    Circle()
+                        .stroke(isSelected ? Color.white : Color.clear, lineWidth: 2)
+                )
+                .overlay(
+                    Circle()
+                        .stroke(isSelected ? preset.color : Color.clear, lineWidth: 1)
+                        .padding(3)
+                )
+                .shadow(color: isSelected ? preset.color.opacity(0.5) : .clear, radius: 4)
+        }
+        .buttonStyle(.plain)
     }
 }
 

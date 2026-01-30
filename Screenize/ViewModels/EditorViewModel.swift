@@ -431,6 +431,13 @@ final class EditorViewModel: ObservableObject {
         invalidatePreviewCache()
     }
 
+    /// Add an annotation keyframe (explicit type)
+    func addAnnotationKeyframe(type: AnnotationType) {
+        addAnnotationKeyframe(at: currentTime, type: type)
+        hasUnsavedChanges = true
+        invalidatePreviewCache()
+    }
+
     private func addTransformKeyframe(at time: TimeInterval) {
         guard let trackIndex = project.timeline.tracks.firstIndex(where: { $0.trackType == .transform }) else {
             return
@@ -538,6 +545,10 @@ final class EditorViewModel: ObservableObject {
     }
 
     private func addAnnotationKeyframe(at time: TimeInterval) {
+        addAnnotationKeyframe(at: time, type: .text)
+    }
+
+    private func addAnnotationKeyframe(at time: TimeInterval, type: AnnotationType) {
         guard let trackIndex = project.timeline.tracks.firstIndex(where: { $0.trackType == .annotation }) else {
             return
         }
@@ -546,10 +557,13 @@ final class EditorViewModel: ObservableObject {
             return
         }
 
-        let newKeyframe = AnnotationKeyframe(
-            time: time,
-            text: "Note"
-        )
+        let newKeyframe: AnnotationKeyframe
+        switch type {
+        case .text:
+            newKeyframe = AnnotationKeyframe(time: time, type: .text, text: "Note")
+        case .arrow:
+            newKeyframe = AnnotationKeyframe(time: time, type: .arrow, text: "")
+        }
 
         track.keyframes.append(newKeyframe)
         track.keyframes.sort { $0.time < $1.time }
@@ -557,8 +571,6 @@ final class EditorViewModel: ObservableObject {
         project.timeline.tracks[trackIndex] = .annotation(track)
         selectedKeyframeID = newKeyframe.id
         selectedTrackType = .annotation
-        hasUnsavedChanges = true
-        invalidatePreviewCache()
     }
 
     /// Delete a keyframe

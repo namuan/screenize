@@ -462,38 +462,198 @@ struct KeystrokeKeyframe: TimedKeyframe, Equatable {
 
 // MARK: - Annotation Keyframe
 
-/// Text annotation keyframe
+/// Annotation type
+enum AnnotationType: String, Codable, CaseIterable {
+    case text
+    case arrow
+
+    var displayName: String {
+        switch self {
+        case .text: return "Text"
+        case .arrow: return "Arrow"
+        }
+    }
+}
+
+/// Simple RGBA color (Codable)
+struct RGBAColor: Codable, Equatable, Hashable {
+    var r: CGFloat
+    var g: CGFloat
+    var b: CGFloat
+    var a: CGFloat
+
+    init(r: CGFloat, g: CGFloat, b: CGFloat, a: CGFloat = 1.0) {
+        self.r = Self.clamp(r)
+        self.g = Self.clamp(g)
+        self.b = Self.clamp(b)
+        self.a = Self.clamp(a)
+    }
+
+    var color: Color {
+        Color(red: Double(r), green: Double(g), blue: Double(b), opacity: Double(a))
+    }
+
+    var cgColor: CGColor {
+        CGColor(red: r, green: g, blue: b, alpha: a)
+    }
+
+    func multipliedAlpha(_ multiplier: CGFloat) -> Self {
+        var copy = self
+        copy.a = Self.clamp(a * multiplier)
+        return copy
+    }
+
+    private static func clamp(_ value: CGFloat) -> CGFloat {
+        max(0, min(1, value))
+    }
+
+    static let white = Self(r: 1.0, g: 1.0, b: 1.0)
+    static let yellow = Self(r: 1.0, g: 0.86, b: 0.2)
+    static let red = Self(r: 1.0, g: 0.25, b: 0.2)
+    static let blue = Self(r: 0.2, g: 0.55, b: 1.0)
+}
+
+/// Annotation keyframe
 struct AnnotationKeyframe: TimedKeyframe, Equatable {
     let id: UUID
     var time: TimeInterval           // Annotation start time
+    var type: AnnotationType         // Text or arrow
+
+    // Text
     var text: String                 // Text to display
     var duration: TimeInterval       // Display duration
     var fadeInDuration: TimeInterval // Fade-in duration
     var fadeOutDuration: TimeInterval // Fade-out duration
     var position: NormalizedPoint    // Overlay center position (UI uses top-left origin)
     var fontScale: CGFloat           // Relative to frame height (e.g. 0.04 = 4%)
+
+    // Arrow
+    var arrowStart: NormalizedPoint  // Tail position (UI uses top-left origin)
+    var arrowEnd: NormalizedPoint    // Head position (UI uses top-left origin)
+    var arrowColor: RGBAColor
+    var arrowLineWidthScale: CGFloat // Relative to frame height
+    var arrowHeadScale: CGFloat      // Relative to frame height
+
     var easing: EasingCurve
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case time
+        case type
+
+        case text
+        case duration
+        case fadeInDuration
+        case fadeOutDuration
+        case position
+        case fontScale
+
+        case arrowStart
+        case arrowEnd
+        case arrowColor
+        case arrowLineWidthScale
+        case arrowHeadScale
+
+        case easing
+    }
+
+    private enum LegacyCodingKeys: String, CodingKey {
+        case x
+        case y
+        case positionX
+        case positionY
+    }
 
     init(
         id: UUID = UUID(),
         time: TimeInterval,
+        type: AnnotationType = .text,
         text: String,
         duration: TimeInterval = 2.0,
         fadeInDuration: TimeInterval = 0.15,
         fadeOutDuration: TimeInterval = 0.3,
         position: NormalizedPoint = NormalizedPoint(x: 0.5, y: 0.25),
         fontScale: CGFloat = 0.04,
+        arrowStart: NormalizedPoint = NormalizedPoint(x: 0.35, y: 0.35),
+        arrowEnd: NormalizedPoint = NormalizedPoint(x: 0.65, y: 0.55),
+        arrowColor: RGBAColor = .yellow,
+        arrowLineWidthScale: CGFloat = 0.008,
+        arrowHeadScale: CGFloat = 0.035,
         easing: EasingCurve = .easeOut
     ) {
         self.id = id
         self.time = time
+        self.type = type
         self.text = text
         self.duration = max(0.2, duration)
         self.fadeInDuration = max(0, fadeInDuration)
         self.fadeOutDuration = max(0, fadeOutDuration)
         self.position = position.clamped()
         self.fontScale = max(0.015, min(0.12, fontScale))
+        self.arrowStart = arrowStart.clamped()
+        self.arrowEnd = arrowEnd.clamped()
+        self.arrowColor = arrowColor
+        self.arrowLineWidthScale = max(0.001, min(0.05, arrowLineWidthScale))
+        self.arrowHeadScale = max(0.005, min(0.2, arrowHeadScale))
         self.easing = easing
+    }
+
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        let legacy = try? decoder.container(keyedBy: LegacyCodingKeys.self)
+
+        let id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        let time = try container.decode(TimeInterval.self, forKey: .time)
+        let type = try container.decodeIfPresent(AnnotationType.self, forKey: .type) ?? .text
+
+        let text = try container.decodeIfPresent(String.self, forKey: .text) ?? ""
+        let duration = try container.decodeIfPresent(TimeInterval.self, forKey: .duration) ?? 2.0
+        let fadeInDuration = try container.decodeIfPresent(TimeInterval.self, forKey: .fadeInDuration) ?? 0.15
+        let fadeOutDuration = try container.decodeIfPresent(TimeInterval.self, forKey: .fadeOutDuration) ?? 0.3
+        let decodedPosition = try container.decodeIfPresent(NormalizedPoint.self, forKey: .position)
+        let legacyX = try legacy?.decodeIfPresent(CGFloat.self, forKey: .x)
+            ?? legacy?.decodeIfPresent(CGFloat.self, forKey: .positionX)
+        let legacyY = try legacy?.decodeIfPresent(CGFloat.self, forKey: .y)
+            ?? legacy?.decodeIfPresent(CGFloat.self, forKey: .positionY)
+
+        let position: NormalizedPoint
+        if let decodedPosition {
+            position = decodedPosition
+        } else if let legacyX, let legacyY {
+            position = NormalizedPoint(x: legacyX, y: legacyY)
+        } else {
+            position = NormalizedPoint(x: 0.5, y: 0.25)
+        }
+        let fontScale = try container.decodeIfPresent(CGFloat.self, forKey: .fontScale) ?? 0.04
+
+        let arrowStart = try container.decodeIfPresent(NormalizedPoint.self, forKey: .arrowStart)
+            ?? NormalizedPoint(x: 0.35, y: 0.35)
+        let arrowEnd = try container.decodeIfPresent(NormalizedPoint.self, forKey: .arrowEnd)
+            ?? NormalizedPoint(x: 0.65, y: 0.55)
+        let arrowColor = try container.decodeIfPresent(RGBAColor.self, forKey: .arrowColor) ?? .yellow
+        let arrowLineWidthScale = try container.decodeIfPresent(CGFloat.self, forKey: .arrowLineWidthScale) ?? 0.008
+        let arrowHeadScale = try container.decodeIfPresent(CGFloat.self, forKey: .arrowHeadScale) ?? 0.035
+
+        let easing = try container.decodeIfPresent(EasingCurve.self, forKey: .easing) ?? .easeOut
+
+        self.init(
+            id: id,
+            time: time,
+            type: type,
+            text: text,
+            duration: duration,
+            fadeInDuration: fadeInDuration,
+            fadeOutDuration: fadeOutDuration,
+            position: position,
+            fontScale: fontScale,
+            arrowStart: arrowStart,
+            arrowEnd: arrowEnd,
+            arrowColor: arrowColor,
+            arrowLineWidthScale: arrowLineWidthScale,
+            arrowHeadScale: arrowHeadScale,
+            easing: easing
+        )
     }
 
     /// Overlay end time
