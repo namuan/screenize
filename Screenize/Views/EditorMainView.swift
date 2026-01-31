@@ -212,7 +212,6 @@ struct EditorMainView: View {
             }
             .buttonStyle(.plain)
             .keyboardShortcut(.home, modifiers: [])
-            .keyboardShortcut(.leftArrow, modifiers: [.command, .shift])
 
             // Previous frame
             Button {
@@ -278,7 +277,6 @@ struct EditorMainView: View {
             }
             .buttonStyle(.plain)
             .keyboardShortcut(.end, modifiers: [])
-            .keyboardShortcut(.rightArrow, modifiers: [.command, .shift])
 
             // Time display
             Text(formatTime(viewModel.currentTime))
