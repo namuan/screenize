@@ -238,6 +238,38 @@ struct SettingsInspector: View {
                 }
             }
 
+            // Custom image
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Custom Image")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.tertiary)
+
+                HStack(spacing: 8) {
+                    Button {
+                        selectBackgroundImage()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "photo")
+                            Text(isBackgroundImageSelected ? "Change Image" : "Select Image")
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+
+                    if isBackgroundImageSelected {
+                        Button {
+                            settings.backgroundStyle = .gradient(.defaultGradient)
+                            onChange?()
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Remove background image")
+                    }
+                }
+            }
+
             // Current selection preview
             currentBackgroundPreview
                 .frame(height: 60)
@@ -475,6 +507,24 @@ struct SettingsInspector: View {
             return current.hexString == color.hexString
         }
         return false
+    }
+
+    private var isBackgroundImageSelected: Bool {
+        if case .image = settings.backgroundStyle { return true }
+        return false
+    }
+
+    private func selectBackgroundImage() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.image, .png, .jpeg, .heic]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.message = "Select a background image"
+
+        if panel.runModal() == .OK, let url = panel.url {
+            settings.backgroundStyle = .image(url)
+            onChange?()
+        }
     }
 
     @ViewBuilder
