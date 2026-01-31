@@ -211,6 +211,8 @@ struct EditorMainView: View {
                 Image(systemName: "backward.end.fill")
             }
             .buttonStyle(.plain)
+            .keyboardShortcut(.home, modifiers: [])
+            .keyboardShortcut(.leftArrow, modifiers: [.command])
 
             // Previous frame
             Button {
@@ -221,6 +223,18 @@ struct EditorMainView: View {
                 Image(systemName: "backward.frame.fill")
             }
             .buttonStyle(.plain)
+            .keyboardShortcut(.leftArrow, modifiers: [])
+
+            // Jump backward a few seconds
+            Button {
+                Task {
+                    await viewModel.jumpBackward(seconds: 5)
+                }
+            } label: {
+                Image(systemName: "gobackward.5")
+            }
+            .buttonStyle(.plain)
+            .keyboardShortcut(.leftArrow, modifiers: [.option])
 
             // Play/Pause
             Button {
@@ -241,6 +255,18 @@ struct EditorMainView: View {
                 Image(systemName: "forward.frame.fill")
             }
             .buttonStyle(.plain)
+            .keyboardShortcut(.rightArrow, modifiers: [])
+
+            // Jump forward a few seconds
+            Button {
+                Task {
+                    await viewModel.jumpForward(seconds: 5)
+                }
+            } label: {
+                Image(systemName: "goforward.5")
+            }
+            .buttonStyle(.plain)
+            .keyboardShortcut(.rightArrow, modifiers: [.option])
 
             // To end
             Button {
@@ -251,6 +277,8 @@ struct EditorMainView: View {
                 Image(systemName: "forward.end.fill")
             }
             .buttonStyle(.plain)
+            .keyboardShortcut(.end, modifiers: [])
+            .keyboardShortcut(.rightArrow, modifiers: [.command])
 
             // Time display
             Text(formatTime(viewModel.currentTime))
