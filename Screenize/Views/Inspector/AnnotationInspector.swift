@@ -416,6 +416,10 @@ private struct ArrowColorPicker: View {
                 .frame(width: 24, height: 24)
                 .overlay(
                     Circle()
+                        .stroke(Color.black.opacity(0.18), lineWidth: 0.75)
+                )
+                .overlay(
+                    Circle()
                         .stroke(isSelected ? Color.white : Color.clear, lineWidth: 2)
                 )
                 .overlay(
@@ -426,6 +430,18 @@ private struct ArrowColorPicker: View {
                 .shadow(color: isSelected ? preset.color.opacity(0.5) : .clear, radius: 4)
         }
         .buttonStyle(.plain)
+    }
+
+    private static func rgba(from color: Color) -> RGBAColor {
+        let nsColor = NSColor(color)
+        let rgb = nsColor.usingColorSpace(.deviceRGB) ?? nsColor
+
+        var r: CGFloat = 1
+        var g: CGFloat = 1
+        var b: CGFloat = 1
+        var a: CGFloat = 1
+        rgb.getRed(&r, green: &g, blue: &b, alpha: &a)
+        return RGBAColor(r: r, g: g, b: b, a: a)
     }
 }
 
@@ -470,6 +486,10 @@ private struct RGBAColorPickerRow: View {
             Circle()
                 .fill(preset.color)
                 .frame(width: 24, height: 24)
+                .overlay(
+                    Circle()
+                        .stroke(Color.black.opacity(0.18), lineWidth: 0.75)
+                )
                 .overlay(
                     Circle()
                         .stroke(isSelected ? Color.white : Color.clear, lineWidth: 2)
