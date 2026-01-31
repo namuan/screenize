@@ -17,6 +17,9 @@ struct EditorMainView: View {
     /// Show the Smart generator panel
     @State private var showGeneratorPanel = false
 
+    /// Local event monitor for Delete/Backspace key
+    @State private var deleteKeyMonitor: Any?
+
     // MARK: - Initialization
 
     init(project: ScreenizeProject, projectURL: URL? = nil) {
@@ -125,6 +128,24 @@ struct EditorMainView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Do you want to save the changes made to this project?")
+        }
+        .alert("Unsaved Changes", isPresented: $showNewRecordingConfirmation) {
+            Button("Don't Save", role: .destructive) {
+                startNewRecording()
+            }
+            Button("Save & Record") {
+                saveProject()
+                startNewRecording()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Do you want to save before starting a new recording?")
+        }
+        .onAppear {
+            installDeleteKeyMonitor()
+        }
+        .onDisappear {
+            removeDeleteKeyMonitor()
         }
     }
 
@@ -294,6 +315,52 @@ struct EditorMainView: View {
                 print("Failed to save project: \(error)")
             }
         }
+    }
+
+    // MARK: - Delete Key Monitor
+
+    private func installDeleteKeyMonitor() {
+        deleteKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [self] event in
+            // Delete (backspace) = keyCode 51, Forward Delete = keyCode 117
+            guard event.keyCode == 51 || event.keyCode == 117 else {
+                return event
+            }
+
+            // If a text field is focused, let the event pass through for normal editing
+            if let firstResponder = NSApp.keyWindow?.firstResponder,
+               firstResponder is NSTextView,
+               (firstResponder as? NSTextView)?.superview is NSTextField {
+                return event
+            }
+
+            // Delete the selected keyframe
+            if let id = viewModel.selectedKeyframeID,
+               let trackType = viewModel.selectedTrackType {
+                viewModel.deleteKeyframe(id, from: trackType)
+                return nil // consume the event
+            }
+
+            return event
+        }
+    }
+
+    private func removeDeleteKeyMonitor() {
+        if let monitor = deleteKeyMonitor {
+            NSEvent.removeMonitor(monitor)
+            deleteKeyMonitor = nil
+        }
+    }
+
+    // MARK: - Navigation
+
+    private func returnToHome() {
+        viewModel.cleanup()
+        AppState.shared.closeProject()
+    }
+
+    private func startNewRecording() {
+        viewModel.cleanup()
+        AppState.shared.startNewRecording()
     }
 
     // MARK: - Helpers
