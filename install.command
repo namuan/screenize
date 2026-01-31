@@ -5,13 +5,13 @@ OPEN_APP=false
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
-        -open)
+        -open|--open)
             OPEN_APP=true
             shift
             ;;
         *)
             echo "Unknown option: $1"
-            echo "Usage: $0 [-open]"
+            echo "Usage: $0 [--open]"
             exit 1
             ;;
     esac
