@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 /// Annotation keyframe inspector
 struct AnnotationInspector: View {
@@ -139,6 +140,43 @@ struct AnnotationInspector: View {
 
                 Slider(value: $keyframe.fontScale, in: 0.02...0.10, step: 0.005)
                     .onChange(of: keyframe.fontScale) { _ in onChange?() }
+
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Text("Text Color")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(.secondary)
+
+                        Spacer()
+                    }
+
+                    RGBAColorPickerRow(
+                        color: $keyframe.textColor,
+                        presets: [.white, .black, .yellow, .red, .blue],
+                        supportsOpacity: false,
+                        onChange: onChange
+                    )
+
+                    HStack {
+                        Text("Background")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(.secondary)
+
+                        Spacer()
+                    }
+
+                    RGBAColorPickerRow(
+                        color: $keyframe.textBackgroundColor,
+                        presets: [
+                            RGBAColor(r: 0.08, g: 0.08, b: 0.08, a: 0.78),
+                            RGBAColor(r: 1.0, g: 1.0, b: 1.0, a: 0.85),
+                            RGBAColor(r: 1.0, g: 0.86, b: 0.2, a: 0.85),
+                            RGBAColor(r: 0.0, g: 0.0, b: 0.0, a: 0.55)
+                        ],
+                        supportsOpacity: true,
+                        onChange: onChange
+                    )
+                }
             } else {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
@@ -388,6 +426,74 @@ private struct ArrowColorPicker: View {
                 .shadow(color: isSelected ? preset.color.opacity(0.5) : .clear, radius: 4)
         }
         .buttonStyle(.plain)
+    }
+}
+
+private struct RGBAColorPickerRow: View {
+    @Binding var color: RGBAColor
+    let presets: [RGBAColor]
+    let supportsOpacity: Bool
+    var onChange: (() -> Void)?
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(presets, id: \.self) { preset in
+                swatchButton(for: preset)
+            }
+
+            Spacer()
+
+            ColorPicker(
+                "",
+                selection: Binding(
+                    get: { color.color },
+                    set: { newValue in
+                        color = RGBAColorPickerRow.rgba(from: newValue)
+                        onChange?()
+                    }
+                ),
+                supportsOpacity: supportsOpacity
+            )
+            .labelsHidden()
+        }
+    }
+
+    private func swatchButton(for preset: RGBAColor) -> some View {
+        let isSelected = color == preset
+
+        return Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                color = preset
+            }
+            onChange?()
+        } label: {
+            Circle()
+                .fill(preset.color)
+                .frame(width: 24, height: 24)
+                .overlay(
+                    Circle()
+                        .stroke(isSelected ? Color.white : Color.clear, lineWidth: 2)
+                )
+                .overlay(
+                    Circle()
+                        .stroke(isSelected ? preset.color : Color.clear, lineWidth: 1)
+                        .padding(3)
+                )
+                .shadow(color: isSelected ? preset.color.opacity(0.5) : .clear, radius: 4)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private static func rgba(from color: Color) -> RGBAColor {
+        let nsColor = NSColor(color)
+        let rgb = nsColor.usingColorSpace(.deviceRGB) ?? nsColor
+
+        var r: CGFloat = 1
+        var g: CGFloat = 1
+        var b: CGFloat = 1
+        var a: CGFloat = 1
+        rgb.getRed(&r, green: &g, blue: &b, alpha: &a)
+        return RGBAColor(r: r, g: g, b: b, a: a)
     }
 }
 

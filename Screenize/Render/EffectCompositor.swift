@@ -311,13 +311,23 @@ final class EffectCompositor {
         let paddingV: CGFloat = baseFontSize * 0.55
         let maxTextWidth: CGFloat = min(frameSize.width * 0.75, 900)
 
+        let textColor = annotation.textColor.multipliedAlpha(annotation.opacity)
+        let backgroundColor = annotation.textBackgroundColor.multipliedAlpha(annotation.opacity)
+
+        let backgroundLuma = (annotation.textBackgroundColor.r * 0.2126)
+            + (annotation.textBackgroundColor.g * 0.7152)
+            + (annotation.textBackgroundColor.b * 0.0722)
+        let borderBase = backgroundLuma > 0.6 ? NSColor.black : NSColor.white
+        let borderAlphaFactor = min(1.0, annotation.textBackgroundColor.a / 0.78)
+
         let paragraph = NSMutableParagraphStyle()
         paragraph.lineBreakMode = .byWordWrapping
         paragraph.alignment = .center
 
         let attributes: [NSAttributedString.Key: Any] = [
             .font: font,
-            .foregroundColor: NSColor.white.withAlphaComponent(annotation.opacity),
+            .foregroundColor: (NSColor(cgColor: textColor.cgColor) ?? NSColor.white)
+                .withAlphaComponent(textColor.a),
             .paragraphStyle: paragraph
         ]
 
@@ -353,11 +363,11 @@ final class EffectCompositor {
 
         let bubbleRect = CGRect(x: 0, y: 0, width: bubbleWidth, height: bubbleHeight)
         let path = NSBezierPath(roundedRect: bubbleRect, xRadius: cornerRadius, yRadius: cornerRadius)
-        NSColor(white: 0.08, alpha: 0.78 * annotation.opacity).setFill()
+        (NSColor(cgColor: backgroundColor.cgColor) ?? NSColor(white: 0.08, alpha: 0.78 * annotation.opacity)).setFill()
         path.fill()
 
         // Subtle border
-        NSColor(white: 1.0, alpha: 0.10 * annotation.opacity).setStroke()
+        borderBase.withAlphaComponent(0.12 * annotation.opacity * borderAlphaFactor).setStroke()
         path.lineWidth = 1
         path.stroke()
 

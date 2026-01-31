@@ -516,6 +516,7 @@ struct RGBAColor: Codable, Equatable, Hashable {
     }
 
     static let white = Self(r: 1.0, g: 1.0, b: 1.0)
+    static let black = Self(r: 0.0, g: 0.0, b: 0.0)
     static let yellow = Self(r: 1.0, g: 0.86, b: 0.2)
     static let red = Self(r: 1.0, g: 0.25, b: 0.2)
     static let blue = Self(r: 0.2, g: 0.55, b: 1.0)
@@ -534,6 +535,8 @@ struct AnnotationKeyframe: TimedKeyframe, Equatable {
     var fadeOutDuration: TimeInterval // Fade-out duration
     var position: NormalizedPoint    // Overlay center position (UI uses top-left origin)
     var fontScale: CGFloat           // Relative to frame height (e.g. 0.04 = 4%)
+    var textColor: RGBAColor          // Text color
+    var textBackgroundColor: RGBAColor // Background color (supports alpha)
 
     // Arrow
     var arrowStart: NormalizedPoint  // Tail position (UI uses top-left origin)
@@ -555,6 +558,8 @@ struct AnnotationKeyframe: TimedKeyframe, Equatable {
         case fadeOutDuration
         case position
         case fontScale
+        case textColor
+        case textBackgroundColor
 
         case arrowStart
         case arrowEnd
@@ -582,6 +587,8 @@ struct AnnotationKeyframe: TimedKeyframe, Equatable {
         fadeOutDuration: TimeInterval = 0.3,
         position: NormalizedPoint = NormalizedPoint(x: 0.5, y: 0.25),
         fontScale: CGFloat = 0.04,
+        textColor: RGBAColor = .white,
+        textBackgroundColor: RGBAColor = RGBAColor(r: 0.08, g: 0.08, b: 0.08, a: 0.78),
         arrowStart: NormalizedPoint = NormalizedPoint(x: 0.35, y: 0.35),
         arrowEnd: NormalizedPoint = NormalizedPoint(x: 0.65, y: 0.55),
         arrowColor: RGBAColor = .yellow,
@@ -598,6 +605,8 @@ struct AnnotationKeyframe: TimedKeyframe, Equatable {
         self.fadeOutDuration = max(0, fadeOutDuration)
         self.position = position.clamped()
         self.fontScale = max(0.015, min(0.12, fontScale))
+        self.textColor = textColor
+        self.textBackgroundColor = textBackgroundColor
         self.arrowStart = arrowStart.clamped()
         self.arrowEnd = arrowEnd.clamped()
         self.arrowColor = arrowColor
@@ -634,6 +643,9 @@ struct AnnotationKeyframe: TimedKeyframe, Equatable {
             position = NormalizedPoint(x: 0.5, y: 0.25)
         }
         let fontScale = try container.decodeIfPresent(CGFloat.self, forKey: .fontScale) ?? 0.04
+        let textColor = try container.decodeIfPresent(RGBAColor.self, forKey: .textColor) ?? .white
+        let textBackgroundColor = try container.decodeIfPresent(RGBAColor.self, forKey: .textBackgroundColor)
+            ?? RGBAColor(r: 0.08, g: 0.08, b: 0.08, a: 0.78)
 
         let arrowStart = try container.decodeIfPresent(NormalizedPoint.self, forKey: .arrowStart)
             ?? NormalizedPoint(x: 0.35, y: 0.35)
@@ -655,6 +667,8 @@ struct AnnotationKeyframe: TimedKeyframe, Equatable {
             fadeOutDuration: fadeOutDuration,
             position: position,
             fontScale: fontScale,
+            textColor: textColor,
+            textBackgroundColor: textBackgroundColor,
             arrowStart: arrowStart,
             arrowEnd: arrowEnd,
             arrowColor: arrowColor,
