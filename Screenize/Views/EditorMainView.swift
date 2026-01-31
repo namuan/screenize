@@ -78,6 +78,14 @@ struct EditorMainView: View {
                 )
                 .frame(height: TimelineView.preferredHeight(trackCount: viewModel.project.timeline.tracks.count))
             }
+            .focusable()
+            .onDeleteCommand {
+                guard let id = viewModel.selectedKeyframeID,
+                      let trackType = viewModel.selectedTrackType else {
+                    return
+                }
+                viewModel.deleteKeyframe(id, from: trackType)
+            }
 
             // Right: inspector
             InspectorView(
