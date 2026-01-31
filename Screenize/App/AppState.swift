@@ -298,6 +298,21 @@ final class AppState: ObservableObject {
         NSApp.windows.first { !($0 is NSPanel) }?.makeKeyAndOrderFront(nil)
     }
 
+    // MARK: - Project Navigation
+
+    /// Close the current project and return to the welcome screen
+    func closeProject() {
+        currentProject = nil
+        currentProjectURL = nil
+    }
+
+    /// Close the current project and start a new recording
+    func startNewRecording() {
+        currentProject = nil
+        currentProjectURL = nil
+        showSourcePicker = true
+    }
+
     // MARK: - Project Creation
 
     func createProject(videoURL: URL? = nil, mouseDataURL: URL? = nil) async -> ScreenizeProject? {

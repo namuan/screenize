@@ -11,8 +11,11 @@ struct EditorMainView: View {
     /// Show export sheet
     @State private var showExportSheet = false
 
-    /// Show save confirmation alert
+    /// Show save confirmation alert (for Home navigation)
     @State private var showSaveConfirmation = false
+
+    /// Show save confirmation alert (for New Recording)
+    @State private var showNewRecordingConfirmation = false
 
     /// Show the Smart generator panel
     @State private var showGeneratorPanel = false
@@ -119,11 +122,11 @@ struct EditorMainView: View {
         }
         .alert("Unsaved Changes", isPresented: $showSaveConfirmation) {
             Button("Don't Save", role: .destructive) {
-                // Close without saving
+                returnToHome()
             }
             Button("Save") {
-                // Save and close
                 saveProject()
+                returnToHome()
             }
             Button("Cancel", role: .cancel) {}
         } message: {
@@ -153,6 +156,35 @@ struct EditorMainView: View {
 
     private var toolbar: some View {
         HStack(spacing: 16) {
+            // Home button
+            Button {
+                if viewModel.hasUnsavedChanges {
+                    showSaveConfirmation = true
+                } else {
+                    returnToHome()
+                }
+            } label: {
+                Image(systemName: "house")
+            }
+            .buttonStyle(.plain)
+            .help("Return to Home")
+
+            // New Recording button
+            Button {
+                if viewModel.hasUnsavedChanges {
+                    showNewRecordingConfirmation = true
+                } else {
+                    startNewRecording()
+                }
+            } label: {
+                Image(systemName: "record.circle")
+            }
+            .buttonStyle(.plain)
+            .help("New Recording")
+
+            Divider()
+                .frame(height: 20)
+
             // Playback controls
             playbackControls
 
@@ -351,7 +383,7 @@ struct EditorMainView: View {
         }
     }
 
-    // MARK: - Navigation
+   // MARK: - Navigation
 
     private func returnToHome() {
         viewModel.cleanup()
