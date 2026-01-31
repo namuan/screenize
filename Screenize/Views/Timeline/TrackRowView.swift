@@ -34,7 +34,7 @@ struct TrackRowView<T: Track>: View {
 
     // MARK: - Constants
 
-    static var headerWidth: CGFloat { 120 }
+    static var headerWidth: CGFloat { 170 }
     static var rowHeight: CGFloat { 40 }
 
     // MARK: - Body
