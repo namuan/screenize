@@ -420,10 +420,12 @@ private struct ArrowColorPicker: View {
                 )
                 .overlay(
                     Circle()
+                        .inset(by: 1)
                         .stroke(isSelected ? Color.white : Color.clear, lineWidth: 2)
                 )
                 .overlay(
                     Circle()
+                        .inset(by: 1)
                         .stroke(isSelected ? preset.color : Color.clear, lineWidth: 1)
                         .padding(3)
                 )
@@ -492,10 +494,12 @@ private struct RGBAColorPickerRow: View {
                 )
                 .overlay(
                     Circle()
+                        .inset(by: 1)
                         .stroke(isSelected ? Color.white : Color.clear, lineWidth: 2)
                 )
                 .overlay(
                     Circle()
+                        .inset(by: 1)
                         .stroke(isSelected ? preset.color : Color.clear, lineWidth: 1)
                         .padding(3)
                 )
