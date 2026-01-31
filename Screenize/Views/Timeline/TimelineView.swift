@@ -53,6 +53,9 @@ struct TimelineView: View {
     /// Whether the playhead is being dragged
     @State private var isPlayheadDragging = false
 
+    /// Header width (track labels column)
+    @AppStorage("timeline.trackHeaderWidth") private var trackHeaderWidth: Double = Double(TrackRowView<TransformTrack>.headerWidth)
+
     /// Timeline area width (excluding the header)
     @State private var timelineAreaWidth: CGFloat = 0
 
@@ -90,15 +93,18 @@ struct TimelineView: View {
 
             // Timeline body
             GeometryReader { geometry in
-                let headerWidth = TrackRowView<TransformTrack>.headerWidth
-                let availableWidth = geometry.size.width - headerWidth - 1 // 1px for Divider
-                let contentWidth = max(availableWidth, CGFloat(duration) * pixelsPerSecond)
+                 let headerWidth = CGFloat(trackHeaderWidth)
+                 let availableWidth = geometry.size.width - headerWidth - 1 - 6 // divider + resize handle
+                 let contentWidth = max(availableWidth, CGFloat(duration) * pixelsPerSecond)
 
                 HStack(spacing: 0) {
-                    // Left: track header area
-                    trackHeaders
+                     // Left: track header area
+                     trackHeaders
 
-                    Divider()
+                     // Draggable splitter
+                     headerResizeHandle
+
+                     Divider()
 
                     // Right: scrollable timeline area
                     HorizontalScrollViewWithVerticalWheel {
@@ -149,16 +155,18 @@ struct TimelineView: View {
                         scrollOffset = -offset
                     }
                 }
-                .onChange(of: geometry.size.width) { newWidth in
-                    timelineAreaWidth = newWidth - headerWidth - 1
-                }
-                .onAppear {
-                    timelineAreaWidth = availableWidth
-                    // Always fit when entering the editor page
-                    if duration > 0 {
-                        fitToView()
-                    }
-                }
+                 .onChange(of: geometry.size.width) { newWidth in
+                     timelineAreaWidth = newWidth - headerWidth - 1 - 6
+                 }
+                 .onChange(of: trackHeaderWidth) { _ in
+                     timelineAreaWidth = geometry.size.width - CGFloat(trackHeaderWidth) - 1 - 6
+                 }
+                 .onAppear {
+                     timelineAreaWidth = availableWidth
+                     if duration > 0 {
+                         fitToView()
+                     }
+                 }
             }
         }
         .onChange(of: duration) { newDuration in
@@ -221,7 +229,34 @@ struct TimelineView: View {
         .padding(.vertical, 6)
     }
 
-    // MARK: - Track Headers
+     // MARK: - Header Resize
+
+     private let minHeaderWidth: CGFloat = 120
+     private let maxHeaderWidth: CGFloat = 320
+
+     private var headerResizeHandle: some View {
+         Rectangle()
+             .fill(Color.clear)
+             .frame(width: 6)
+             .contentShape(Rectangle())
+             .gesture(
+                 DragGesture(minimumDistance: 0)
+                     .onChanged { value in
+                         let newWidth = CGFloat(trackHeaderWidth) + value.translation.width
+                         trackHeaderWidth = Double(max(minHeaderWidth, min(maxHeaderWidth, newWidth)))
+                     }
+             )
+             .onHover { isHovering in
+                 if isHovering {
+                     NSCursor.resizeLeftRight.push()
+                 } else {
+                     NSCursor.pop()
+                 }
+             }
+     }
+
+     // MARK: - Track Headers
+
 
     private var trackHeaders: some View {
         VStack(spacing: 0) {
@@ -239,8 +274,8 @@ struct TimelineView: View {
 
             Spacer()
         }
-        .frame(width: TrackRowView<TransformTrack>.headerWidth)
-        .background(Color(nsColor: .controlBackgroundColor))
+         .frame(width: CGFloat(trackHeaderWidth))
+         .background(Color(nsColor: .controlBackgroundColor))
     }
 
     private func trackHeaderRow(for track: AnyTrack, at index: Int) -> some View {
