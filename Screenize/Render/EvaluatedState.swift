@@ -318,6 +318,8 @@ struct ActiveAnnotation {
     let text: String
     let position: NormalizedPoint
     let fontScale: CGFloat
+    let textColor: RGBAColor
+    let textBackgroundColor: RGBAColor
 
     // Arrow
     let arrowStart: NormalizedPoint
@@ -333,6 +335,8 @@ struct ActiveAnnotation {
         progress: CGFloat,
         position: NormalizedPoint,
         fontScale: CGFloat,
+        textColor: RGBAColor,
+        textBackgroundColor: RGBAColor,
         arrowStart: NormalizedPoint,
         arrowEnd: NormalizedPoint,
         arrowColor: RGBAColor,
@@ -345,6 +349,8 @@ struct ActiveAnnotation {
         self.progress = max(0, min(1, progress))
         self.position = position
         self.fontScale = max(0.015, min(0.12, fontScale))
+        self.textColor = textColor
+        self.textBackgroundColor = textBackgroundColor
 
         self.arrowStart = arrowStart
         self.arrowEnd = arrowEnd
@@ -360,6 +366,8 @@ struct ActiveAnnotation {
         self.progress = keyframe.progress(at: time)
         self.position = keyframe.position
         self.fontScale = keyframe.fontScale
+        self.textColor = keyframe.textColor
+        self.textBackgroundColor = keyframe.textBackgroundColor
         self.arrowStart = keyframe.arrowStart
         self.arrowEnd = keyframe.arrowEnd
         self.arrowColor = keyframe.arrowColor
