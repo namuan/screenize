@@ -403,6 +403,18 @@ final class EditorViewModel: ObservableObject {
         await seek(to: newTime)
     }
 
+    /// Jump backward by the given number of seconds
+    func jumpBackward(seconds: TimeInterval) async {
+        let newTime = max(0, currentTime - seconds)
+        await seek(to: newTime)
+    }
+
+    /// Jump forward by the given number of seconds
+    func jumpForward(seconds: TimeInterval) async {
+        let newTime = min(duration, currentTime + seconds)
+        await seek(to: newTime)
+    }
+
     // MARK: - Keyframe Management
 
     /// Add a keyframe at the current time
