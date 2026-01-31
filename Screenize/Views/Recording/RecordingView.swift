@@ -136,6 +136,18 @@ private struct RecordingControlBar: View {
 
     var body: some View {
         HStack(spacing: 20) {
+            // Home button (return to welcome screen, hidden during recording)
+            if !appState.isRecording {
+                Button {
+                    appState.returnToWelcome()
+                } label: {
+                    Image(systemName: "house")
+                        .font(.title3)
+                }
+                .buttonStyle(.plain)
+                .help("Return to Home")
+            }
+
             // Source info (click to change)
             Button {
                 appState.showSourcePicker = true

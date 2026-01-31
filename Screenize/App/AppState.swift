@@ -329,6 +329,15 @@ final class AppState: ObservableObject {
         showSourcePicker = true
     }
 
+    /// Leave the recording screen and return to the welcome screen
+    func returnToWelcome() {
+        selectedTarget = nil
+        showSourcePicker = false
+        hasRecording = false
+        lastRecordingURL = nil
+        lastMouseDataURL = nil
+    }
+
     // MARK: - Project Creation
 
     func createProject(videoURL: URL? = nil, mouseDataURL: URL? = nil) async -> ScreenizeProject? {
