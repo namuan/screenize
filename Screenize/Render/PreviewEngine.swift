@@ -282,6 +282,7 @@ final class PreviewEngine: ObservableObject {
 
                 // Stop playback when reaching the trim end
                 if newTime >= self.effectiveTrimEnd {
+                    self.currentTime = self.effectiveTrimEnd
                     self.pause()
                     return
                 }
