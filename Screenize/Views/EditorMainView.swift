@@ -208,6 +208,29 @@ struct EditorMainView: View {
             Divider()
                 .frame(height: 20)
 
+            // Undo
+            Button {
+                NotificationCenter.default.post(name: .editorUndo, object: nil)
+            } label: {
+                Image(systemName: "arrow.uturn.backward")
+            }
+            .buttonStyle(.plain)
+            .disabled(!viewModel.undoStack.canUndo)
+            .help("Undo")
+
+            // Redo
+            Button {
+                NotificationCenter.default.post(name: .editorRedo, object: nil)
+            } label: {
+                Image(systemName: "arrow.uturn.forward")
+            }
+            .buttonStyle(.plain)
+            .disabled(!viewModel.undoStack.canRedo)
+            .help("Redo")
+
+            Divider()
+                .frame(height: 20)
+
             // Playback controls
             playbackControls
 
