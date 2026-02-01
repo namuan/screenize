@@ -63,3 +63,5 @@ xcuserdata/
 tools
 release
 private-docs
+
+__pycache__
