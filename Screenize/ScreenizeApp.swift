@@ -39,6 +39,20 @@ struct ScreenizeApp: App {
                 CheckForUpdatesView(sparkleController: sparkleController)
             }
 
+            CommandGroup(replacing: .undoRedo) {
+                Button("Undo") {
+                    NotificationCenter.default.post(name: .editorUndo, object: nil)
+                }
+                .keyboardShortcut("z", modifiers: .command)
+                .disabled(!appState.canUndo)
+
+                Button("Redo") {
+                    NotificationCenter.default.post(name: .editorRedo, object: nil)
+                }
+                .keyboardShortcut("z", modifiers: [.command, .shift])
+                .disabled(!appState.canRedo)
+            }
+
             CommandGroup(replacing: .newItem) {
                 Button("New Recording...") {
                     appState.showSourcePicker = true

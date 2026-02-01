@@ -54,6 +54,7 @@
 		F0000051296A0001 /* ExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000051296A0001 /* ExportView.swift */; };
 		F0000052296A0001 /* EditorMainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000052296A0001 /* EditorMainView.swift */; };
 		F0000060296A0001 /* EditorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000060296A0001 /* EditorViewModel.swift */; };
+		F0000061296A0001 /* UndoStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000061296A0001 /* UndoStack.swift */; };
 		F0000070296A0001 /* KeyframeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000070296A0001 /* KeyframeGenerator.swift */; };
 		F0000074296A0001 /* RippleGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000074296A0001 /* RippleGenerator.swift */; };
 		F0000075296A0001 /* CursorInterpolationGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000075296A0001 /* CursorInterpolationGenerator.swift */; };
@@ -154,6 +155,7 @@
 		F1000051296A0001 /* ExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportView.swift; sourceTree = "<group>"; };
 		F1000052296A0001 /* EditorMainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorMainView.swift; sourceTree = "<group>"; };
 		F1000060296A0001 /* EditorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorViewModel.swift; sourceTree = "<group>"; };
+		F1000061296A0001 /* UndoStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UndoStack.swift; sourceTree = "<group>"; };
 		F1000070296A0001 /* KeyframeGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyframeGenerator.swift; sourceTree = "<group>"; };
 		F1000074296A0001 /* RippleGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RippleGenerator.swift; sourceTree = "<group>"; };
 		F1000075296A0001 /* CursorInterpolationGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorInterpolationGenerator.swift; sourceTree = "<group>"; };
@@ -361,6 +363,7 @@
 			isa = PBXGroup;
 			children = (
 				F1000060296A0001 /* EditorViewModel.swift */,
+				F1000061296A0001 /* UndoStack.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -617,6 +620,7 @@
 				F0000051296A0001 /* ExportView.swift in Sources */,
 				F0000052296A0001 /* EditorMainView.swift in Sources */,
 				F0000060296A0001 /* EditorViewModel.swift in Sources */,
+				F0000061296A0001 /* UndoStack.swift in Sources */,
 				F0000070296A0001 /* KeyframeGenerator.swift in Sources */,
 				F0000074296A0001 /* RippleGenerator.swift in Sources */,
 				F0000075296A0001 /* CursorInterpolationGenerator.swift in Sources */,

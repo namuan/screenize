@@ -144,11 +144,25 @@ struct EditorMainView: View {
         } message: {
             Text("Do you want to save before starting a new recording?")
         }
+        .onReceive(NotificationCenter.default.publisher(for: .editorUndo)) { _ in
+            viewModel.undo()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .editorRedo)) { _ in
+            viewModel.redo()
+        }
+        .onReceive(viewModel.undoStack.$canUndo) { canUndo in
+            AppState.shared.canUndo = canUndo
+        }
+        .onReceive(viewModel.undoStack.$canRedo) { canRedo in
+            AppState.shared.canRedo = canRedo
+        }
         .onAppear {
             installDeleteKeyMonitor()
         }
         .onDisappear {
             removeDeleteKeyMonitor()
+            AppState.shared.canUndo = false
+            AppState.shared.canRedo = false
         }
     }
 

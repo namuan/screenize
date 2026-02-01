@@ -46,11 +46,17 @@ final class EditorViewModel: ObservableObject {
 
     // MARK: - Properties
 
-    /// Undo manager
-    private var undoManager: UndoManager?
+    /// Undo stack for snapshot-based undo/redo
+    let undoStack = UndoStack()
 
     /// Cancellation tokens
     private var cancellables = Set<AnyCancellable>()
+
+    /// Whether a binding edit is in progress (for debouncing undo snapshots)
+    private var isInBindingEdit: Bool = false
+
+    /// Timer to reset binding edit state after inactivity
+    private var bindingEditTimer: Timer?
 
     // MARK: - Computed Properties
 
@@ -69,6 +75,7 @@ final class EditorViewModel: ObservableObject {
         Binding(
             get: { self.project.timeline },
             set: { newValue in
+                self.saveBindingUndoSnapshot()
                 self.project.timeline = newValue
                 self.hasUnsavedChanges = true
                 self.invalidatePreviewCache()
@@ -81,6 +88,7 @@ final class EditorViewModel: ObservableObject {
         Binding(
             get: { self.project.renderSettings },
             set: { newValue in
+                self.saveBindingUndoSnapshot()
                 self.project.renderSettings = newValue
                 self.hasUnsavedChanges = true
                 self.updateRenderSettings()
@@ -98,6 +106,7 @@ final class EditorViewModel: ObservableObject {
         Binding(
             get: { self.project.timeline.trimStart },
             set: { newValue in
+                self.saveBindingUndoSnapshot()
                 self.project.timeline.trimStart = newValue
                 self.hasUnsavedChanges = true
                 self.previewEngine.updateTrimRange(
@@ -113,6 +122,7 @@ final class EditorViewModel: ObservableObject {
         Binding(
             get: { self.project.timeline.trimEnd },
             set: { newValue in
+                self.saveBindingUndoSnapshot()
                 self.project.timeline.trimEnd = newValue
                 self.hasUnsavedChanges = true
                 self.previewEngine.updateTrimRange(
@@ -130,6 +140,7 @@ final class EditorViewModel: ObservableObject {
 
     /// Configure the trim range
     func setTrimRange(start: TimeInterval, end: TimeInterval?) {
+        saveBindingUndoSnapshot()
         project.timeline.trimStart = start
         project.timeline.trimEnd = end
         hasUnsavedChanges = true
@@ -176,6 +187,61 @@ final class EditorViewModel: ObservableObject {
             .store(in: &cancellables)
     }
 
+    // MARK: - Undo/Redo
+
+    /// Capture the current state as a snapshot
+    private func currentSnapshot() -> EditorSnapshot {
+        EditorSnapshot(
+            timeline: project.timeline,
+            renderSettings: project.renderSettings,
+            selectedKeyframeID: selectedKeyframeID,
+            selectedTrackType: selectedTrackType
+        )
+    }
+
+    /// Save a snapshot before a mutation
+    private func saveUndoSnapshot() {
+        undoStack.push(currentSnapshot())
+    }
+
+    /// Save a snapshot for binding edits with debounce (coalesces rapid changes)
+    private func saveBindingUndoSnapshot() {
+        if !isInBindingEdit {
+            isInBindingEdit = true
+            saveUndoSnapshot()
+        }
+        // Reset debounce timer
+        bindingEditTimer?.invalidate()
+        bindingEditTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+            Task { @MainActor in
+                self?.isInBindingEdit = false
+            }
+        }
+    }
+
+    /// Undo the last change
+    func undo() {
+        guard let snapshot = undoStack.undo(current: currentSnapshot()) else { return }
+        applySnapshot(snapshot)
+    }
+
+    /// Redo the last undone change
+    func redo() {
+        guard let snapshot = undoStack.redo(current: currentSnapshot()) else { return }
+        applySnapshot(snapshot)
+    }
+
+    /// Apply a snapshot to restore editor state
+    private func applySnapshot(_ snapshot: EditorSnapshot) {
+        project.timeline = snapshot.timeline
+        project.renderSettings = snapshot.renderSettings
+        selectedKeyframeID = snapshot.selectedKeyframeID
+        selectedTrackType = snapshot.selectedTrackType
+        hasUnsavedChanges = true
+        invalidatePreviewCache()
+        updateRenderSettings()
+    }
+
     // MARK: - Lifecycle
 
     /// Initialize the editor
@@ -210,6 +276,7 @@ final class EditorViewModel: ObservableObject {
 
     /// Smart Zoom generation (video analysis + UI state)
     func runSmartZoomGeneration() async {
+        saveUndoSnapshot()
         guard project.media.mouseDataExists else {
             print("Smart generation skipped: No mouse data available")
             return
@@ -407,6 +474,7 @@ final class EditorViewModel: ObservableObject {
 
     /// Add a keyframe at a specified time
     func addKeyframe(to trackType: TrackType, at time: TimeInterval) {
+        saveUndoSnapshot()
         switch trackType {
         case .transform:
             addTransformKeyframe(at: time)
@@ -532,6 +600,7 @@ final class EditorViewModel: ObservableObject {
 
     /// Delete a keyframe
     func deleteKeyframe(_ id: UUID, from trackType: TrackType) {
+        saveUndoSnapshot()
         switch trackType {
         case .transform:
             deleteTransformKeyframe(id)
@@ -617,6 +686,7 @@ final class EditorViewModel: ObservableObject {
 
     /// Update a keyframe time
     func updateKeyframeTime(_ id: UUID, to newTime: TimeInterval) {
+        saveBindingUndoSnapshot()
         // Find and update the keyframe time
         for (trackIndex, anyTrack) in project.timeline.tracks.enumerated() {
             switch anyTrack {
@@ -683,6 +753,7 @@ final class EditorViewModel: ObservableObject {
 
     /// Delete all keyframes
     func deleteAllKeyframes() {
+        saveUndoSnapshot()
         for (trackIndex, anyTrack) in project.timeline.tracks.enumerated() {
             switch anyTrack {
             case .transform(var track):

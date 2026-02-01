@@ -43,6 +43,14 @@ final class AppState: ObservableObject {
     // Preview
     @Published var previewImage: CGImage?
 
+    // MARK: - Editor State (for menu commands)
+
+    /// Whether undo is available (updated from EditorViewModel)
+    @Published var canUndo: Bool = false
+
+    /// Whether redo is available (updated from EditorViewModel)
+    @Published var canRedo: Bool = false
+
     // MARK: - User Preferences
 
     // Note: BackgroundStyle doesn't support @AppStorage directly
@@ -486,6 +494,13 @@ final class AppState: ObservableObject {
             return nil
         }
     }
+}
+
+// MARK: - Notification Names
+
+extension Notification.Name {
+    static let editorUndo = Notification.Name("editorUndo")
+    static let editorRedo = Notification.Name("editorRedo")
 }
 
 // MARK: - Auto Zoom Settings
