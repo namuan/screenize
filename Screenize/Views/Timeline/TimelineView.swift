@@ -164,12 +164,6 @@ struct TimelineView: View {
 
     private var toolbar: some View {
         HStack {
-            // Display current time
-            Text(formatTime(currentTime))
-                .font(.system(size: 12, weight: .medium, design: .monospaced))
-                .foregroundColor(.secondary)
-                .frame(width: 80, alignment: .leading)
-
             Spacer()
 
             // Zoom controls
@@ -262,15 +256,6 @@ struct TimelineView: View {
         }
         .padding(.horizontal, 8)
         .frame(height: trackHeight)
-        .background(
-            selectedTrackType == track.trackType
-                ? KeyframeColor.color(for: track.trackType).opacity(0.1)
-                : Color.clear
-        )
-        .contentShape(Rectangle())
-        .onTapGesture {
-            selectedTrackType = track.trackType
-        }
     }
 
     // MARK: - Track Content
@@ -306,8 +291,8 @@ struct TimelineView: View {
                     onAddKeyframe?(track.trackType, time)
                 }
                 .onTapGesture(count: 1) {
-                    selectedTrackType = track.trackType
-                    selectedKeyframeID = nil  // Deselect the keyframe when clicking the track background
+                    selectedKeyframeID = nil
+                    selectedTrackType = nil
                 }
 
             // Keyframe markers (placed above everything so they are clickable)
@@ -316,11 +301,6 @@ struct TimelineView: View {
         }
         .frame(height: trackHeight)
         .coordinateSpace(name: "trackContent")
-        .background(
-            selectedTrackType == track.trackType
-                ? KeyframeColor.color(for: track.trackType).opacity(0.05)
-                : Color.clear
-        )
     }
 
     @ViewBuilder
@@ -438,19 +418,6 @@ struct TimelineView: View {
             return "keyboard"
         case .audio:
             return "waveform"
-        }
-    }
-
-    private func formatTime(_ time: TimeInterval) -> String {
-        let totalSeconds = Int(time)
-        let minutes = totalSeconds / 60
-        let seconds = totalSeconds % 60
-        let frames = Int((time - Double(totalSeconds)) * 60)
-
-        if duration >= 60 {
-            return String(format: "%02d:%02d:%02d", minutes, seconds, frames)
-        } else {
-            return String(format: "%02d:%02d", seconds, frames)
         }
     }
 

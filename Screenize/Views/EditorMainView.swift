@@ -222,12 +222,6 @@ struct EditorMainView: View {
             Divider()
                 .frame(height: 20)
 
-            // Playback controls
-            playbackControls
-
-            Divider()
-                .frame(height: 20)
-
             // Add keyframe
             keyframeAddMenu
 
@@ -279,68 +273,6 @@ struct EditorMainView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .background(Color(nsColor: .windowBackgroundColor))
-    }
-
-    // MARK: - Playback Controls
-
-    private var playbackControls: some View {
-        HStack(spacing: 8) {
-            // To start
-            Button {
-                Task {
-                    await viewModel.seekToStart()
-                }
-            } label: {
-                Image(systemName: "backward.end.fill")
-            }
-            .buttonStyle(.plain)
-
-            // Previous frame
-            Button {
-                Task {
-                    await viewModel.stepBackward()
-                }
-            } label: {
-                Image(systemName: "backward.frame.fill")
-            }
-            .buttonStyle(.plain)
-
-            // Play/Pause
-            Button {
-                viewModel.togglePlayback()
-            } label: {
-                Image(systemName: viewModel.isPlaying ? "pause.fill" : "play.fill")
-                    .font(.title3)
-            }
-            .buttonStyle(.plain)
-            .keyboardShortcut(.space, modifiers: [])
-
-            // Next frame
-            Button {
-                Task {
-                    await viewModel.stepForward()
-                }
-            } label: {
-                Image(systemName: "forward.frame.fill")
-            }
-            .buttonStyle(.plain)
-
-            // To end
-            Button {
-                Task {
-                    await viewModel.seekToEnd()
-                }
-            } label: {
-                Image(systemName: "forward.end.fill")
-            }
-            .buttonStyle(.plain)
-
-            // Time display
-            Text(formatTime(viewModel.currentTime))
-                .font(.system(size: 12, design: .monospaced))
-                .foregroundColor(.secondary)
-                .frame(width: 70, alignment: .leading)
-        }
     }
 
     // MARK: - Keyframe Add Menu
@@ -435,16 +367,6 @@ struct EditorMainView: View {
         AppState.shared.startNewRecording()
     }
 
-    // MARK: - Helpers
-
-    private func formatTime(_ time: TimeInterval) -> String {
-        let totalSeconds = Int(time)
-        let minutes = totalSeconds / 60
-        let seconds = totalSeconds % 60
-        let frames = Int((time - Double(totalSeconds)) * viewModel.frameRate)
-
-        return String(format: "%02d:%02d:%02d", minutes, seconds, frames)
-    }
 }
 
 // MARK: - Generator Panel View

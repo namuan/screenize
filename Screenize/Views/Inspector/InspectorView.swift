@@ -85,9 +85,6 @@ struct InspectorView: View {
            let trackType = selectedTrackType {
             // When a keyframe is selected
             keyframeInspector(for: keyframeID, trackType: trackType)
-        } else if let trackType = selectedTrackType {
-            // When only a track is selected
-            trackInfo(for: trackType)
         } else {
             // When nothing is selected
             emptyState
@@ -157,53 +154,6 @@ struct InspectorView: View {
         }
     }
 
-    // MARK: - Track Info
-
-    private func trackInfo(for trackType: TrackType) -> some View {
-        VStack(spacing: 16) {
-            Spacer()
-
-            Image(systemName: trackIcon(for: trackType))
-                .font(.system(size: 40))
-                .foregroundColor(KeyframeColor.color(for: trackType).opacity(0.5))
-
-            Text(trackName(for: trackType))
-                .font(.headline)
-                .foregroundColor(.secondary)
-
-            Text("Select a keyframe to edit its properties")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-                .multilineTextAlignment(.center)
-
-            // Track statistics
-            trackStatistics(for: trackType)
-                .padding(.top, 8)
-
-            Spacer()
-        }
-        .padding()
-    }
-
-    private func trackStatistics(for trackType: TrackType) -> some View {
-        let count = keyframeCount(for: trackType)
-
-        return VStack(spacing: 4) {
-            Text("\(count)")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
-                .foregroundColor(KeyframeColor.color(for: trackType))
-
-            Text(count == 1 ? "Keyframe" : "Keyframes")
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(KeyframeColor.color(for: trackType).opacity(0.1))
-        )
-    }
-
     // MARK: - Empty State
 
     private var emptyState: some View {
@@ -269,51 +219,6 @@ struct InspectorView: View {
     }
 
     // MARK: - Helpers
-
-    private func trackIcon(for type: TrackType) -> String {
-        switch type {
-        case .transform:
-            return "arrow.up.left.and.arrow.down.right"
-        case .ripple:
-            return "circles.hexagonpath"
-        case .cursor:
-            return "cursorarrow"
-        case .keystroke:
-            return "keyboard"
-        case .audio:
-            return "waveform"
-        }
-    }
-
-    private func trackName(for type: TrackType) -> String {
-        switch type {
-        case .transform:
-            return "Transform Track"
-        case .ripple:
-            return "Ripple Track"
-        case .cursor:
-            return "Cursor Track"
-        case .keystroke:
-            return "Keystroke Track"
-        case .audio:
-            return "Audio Track"
-        }
-    }
-
-    private func keyframeCount(for type: TrackType) -> Int {
-        switch type {
-        case .transform:
-            return timeline.transformTrack?.keyframes.count ?? 0
-        case .ripple:
-            return timeline.rippleTrack?.keyframes.count ?? 0
-        case .cursor:
-            return timeline.cursorTrack?.styleKeyframes?.count ?? 0
-        case .keystroke:
-            return timeline.keystrokeTrack?.keyframes.count ?? 0
-        case .audio:
-            return 0  // Implement once audio track support exists
-        }
-    }
 
     // MARK: - Keyframe Bindings
 
