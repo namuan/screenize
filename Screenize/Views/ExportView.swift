@@ -67,7 +67,7 @@ struct ExportSheetView: View {
             isPresented: $showFilePicker,
             document: ExportDocument(),
             contentType: .mpeg4Movie,
-            defaultFilename: "\(project.media.videoURL.deletingPathExtension().lastPathComponent)_edited"
+            defaultFilename: "\(project.name)_edited"
         ) { result in
             switch result {
             case .success(let url):
@@ -370,8 +370,8 @@ struct InlineExportProgressView: View {
                 project: ScreenizeProject(
                     name: "Test Project",
                     media: MediaAsset(
-                        videoURL: URL(fileURLWithPath: "/test.mp4"),
-                        mouseDataURL: URL(fileURLWithPath: "/test.json"),
+                        videoPath: "/test.mp4",
+                        mouseDataPath: "/test.json",
                         pixelSize: CGSize(width: 1920, height: 1080),
                         frameRate: 60,
                         duration: 30

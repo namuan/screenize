@@ -19,6 +19,7 @@
 		F0000006296A0001 /* ProjectCreator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000006296A0001 /* ProjectCreator.swift */; };
 		F0000007296A0001 /* RenderSettingsPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000007296A0001 /* RenderSettingsPreset.swift */; };
 		F0000008296A0001 /* PresetManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000008296A0001 /* PresetManager.swift */; };
+		F0000009296A0001 /* UTType+Screenize.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000009296A0001 /* UTType+Screenize.swift */; };
 		F0000010296A0001 /* EasingCurve.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000010296A0001 /* EasingCurve.swift */; };
 		F0000011296A0001 /* Keyframe.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000011296A0001 /* Keyframe.swift */; };
 		F0000012296A0001 /* Track.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000012296A0001 /* Track.swift */; };
@@ -124,6 +125,7 @@
 		F1000006296A0001 /* ProjectCreator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectCreator.swift; sourceTree = "<group>"; };
 		F1000007296A0001 /* RenderSettingsPreset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderSettingsPreset.swift; sourceTree = "<group>"; };
 		F1000008296A0001 /* PresetManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresetManager.swift; sourceTree = "<group>"; };
+		F1000009296A0001 /* UTType+Screenize.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UTType+Screenize.swift"; sourceTree = "<group>"; };
 		F1000010296A0001 /* EasingCurve.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EasingCurve.swift; sourceTree = "<group>"; };
 		F1000011296A0001 /* Keyframe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keyframe.swift; sourceTree = "<group>"; };
 		F1000012296A0001 /* Track.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Track.swift; sourceTree = "<group>"; };
@@ -285,6 +287,7 @@
 				F1000008296A0001 /* PresetManager.swift */,
 				F1000005296A0001 /* ProjectManager.swift */,
 				F1000006296A0001 /* ProjectCreator.swift */,
+				F1000009296A0001 /* UTType+Screenize.swift */,
 			);
 			path = Project;
 			sourceTree = "<group>";
@@ -592,6 +595,7 @@
 				F0000006296A0001 /* ProjectCreator.swift in Sources */,
 				F0000007296A0001 /* RenderSettingsPreset.swift in Sources */,
 				F0000008296A0001 /* PresetManager.swift in Sources */,
+				F0000009296A0001 /* UTType+Screenize.swift in Sources */,
 				F0000010296A0001 /* EasingCurve.swift in Sources */,
 				F0000011296A0001 /* Keyframe.swift in Sources */,
 				F0000012296A0001 /* Track.swift in Sources */,

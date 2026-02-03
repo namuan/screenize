@@ -5,7 +5,7 @@ import CoreGraphics
 /// Contains recorded media and timeline editing data
 struct ScreenizeProject: Codable, Identifiable {
     let id: UUID
-    var version: Int = 1
+    var version: Int = 2
     var name: String
     var createdAt: Date
     var modifiedAt: Date
@@ -34,7 +34,7 @@ struct ScreenizeProject: Codable, Identifiable {
         frameAnalysisCache: [VideoFrameAnalyzer.FrameAnalysis]? = nil
     ) {
         self.id = id
-        self.version = 1
+        self.version = 2
         self.name = name
         self.createdAt = Date()
         self.modifiedAt = Date()
@@ -48,30 +48,65 @@ struct ScreenizeProject: Codable, Identifiable {
 
     // MARK: - File Operations
 
-    /// Save the project to a file
-    func save(to url: URL) throws {
+    /// Save the project into a .screenize package directory
+    func save(to packageURL: URL) throws {
         var project = self
         project.modifiedAt = Date()
 
+        let fm = FileManager.default
+
+        // Create the package directory if needed
+        if !fm.fileExists(atPath: packageURL.path) {
+            try fm.createDirectory(at: packageURL, withIntermediateDirectories: true)
+        }
+
+        // Create the recording subdirectory if needed
+        let recordingDir = packageURL.appendingPathComponent("recording")
+        if !fm.fileExists(atPath: recordingDir.path) {
+            try fm.createDirectory(at: recordingDir, withIntermediateDirectories: true)
+        }
+
+        // Write project.json
+        let projectFileURL = packageURL.appendingPathComponent(Self.projectFileName)
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.dateEncodingStrategy = .iso8601
         let data = try encoder.encode(project)
-        try data.write(to: url)
+        try data.write(to: projectFileURL, options: .atomic)
     }
 
-    /// Load the project from a file
+    /// Load the project from a package directory or legacy .fsproj file
     static func load(from url: URL) throws -> Self {
-        let data = try Data(contentsOf: url)
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return try decoder.decode(Self.self, from: data)
+        let fm = FileManager.default
+        var isDirectory: ObjCBool = false
+        fm.fileExists(atPath: url.path, isDirectory: &isDirectory)
+
+        if isDirectory.boolValue {
+            // Package format: read project.json from inside the directory
+            let projectFileURL = url.appendingPathComponent(projectFileName)
+            let data = try Data(contentsOf: projectFileURL)
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            var project = try decoder.decode(Self.self, from: data)
+            // Inject the package URL for relative path resolution
+            project.media.packageURL = url
+            return project
+        } else {
+            // Legacy .fsproj format: single JSON file
+            let data = try Data(contentsOf: url)
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            return try decoder.decode(Self.self, from: data)
+        }
     }
 
     // MARK: - Computed Properties
 
-    /// Project file extension
-    static let fileExtension = "fsproj"
+    /// Project package extension
+    static let fileExtension = "screenize"
+
+    /// Project data filename within the package
+    static let projectFileName = "project.json"
 
     /// Total duration
     var duration: TimeInterval {

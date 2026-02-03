@@ -19,8 +19,11 @@ final class ProjectManager: ObservableObject {
 
     // MARK: - Properties
 
-    /// Project file extension
-    static let projectExtension = "fsproj"
+    /// Project package extension
+    static let projectExtension = "screenize"
+
+    /// Legacy project file extension
+    static let legacyProjectExtension = "fsproj"
 
     /// Maximum number of recent projects
     private let maxRecentProjects = 10
@@ -39,49 +42,43 @@ final class ProjectManager: ObservableObject {
         loadRecentProjects()
     }
 
-    // MARK: - Project Folder
+    // MARK: - Package Creation
 
-    /// Create the project folder and move media files
+    /// Create a .screenize package and move media files into it
     /// - Parameters:
     ///   - videoURL: Original video file URL
-    ///   - mouseDataURL: Mouse data file URL (optional)
-    /// - Returns: (moved video URL, moved mouse data URL, project folder URL)
-    func createProjectFolder(
+    ///   - mouseDataURL: Mouse data file URL (optional, auto-detected if nil)
+    /// - Returns: Package URL
+    func createPackage(
         for videoURL: URL,
         mouseDataURL: URL? = nil
-    ) throws -> (videoURL: URL, mouseDataURL: URL, projectFolderURL: URL) {
+    ) throws -> URL {
         let videoName = videoURL.deletingPathExtension().lastPathComponent
         let parentDirectory = videoURL.deletingLastPathComponent()
-        let projectFolderURL = parentDirectory.appendingPathComponent(videoName)
+        let packageURL = parentDirectory.appendingPathComponent("\(videoName).\(Self.projectExtension)")
 
-        // Create the project folder
-        if !fileManager.fileExists(atPath: projectFolderURL.path) {
-            try fileManager.createDirectory(at: projectFolderURL, withIntermediateDirectories: true)
-        }
+        // Create the package and recording subdirectory
+        let recordingDir = packageURL.appendingPathComponent("recording")
+        try fileManager.createDirectory(at: recordingDir, withIntermediateDirectories: true)
 
-        // Move the video file
-        let newVideoURL = projectFolderURL.appendingPathComponent(videoURL.lastPathComponent)
-        if !fileManager.fileExists(atPath: newVideoURL.path) {
+        // Move the video into recording/video.mp4
+        let destVideoURL = recordingDir.appendingPathComponent("video.mp4")
+        if !fileManager.fileExists(atPath: destVideoURL.path) {
             if fileManager.fileExists(atPath: videoURL.path) {
-                try fileManager.moveItem(at: videoURL, to: newVideoURL)
+                try fileManager.moveItem(at: videoURL, to: destVideoURL)
             }
         }
 
-        // Move the mouse data file
+        // Move the mouse data into recording/mouse.json
         let mouseURL = mouseDataURL ?? findMouseDataURL(for: videoURL)
-        let newMouseURL = projectFolderURL.appendingPathComponent(mouseURL.lastPathComponent)
-        if !fileManager.fileExists(atPath: newMouseURL.path) {
+        let destMouseURL = recordingDir.appendingPathComponent("mouse.json")
+        if !fileManager.fileExists(atPath: destMouseURL.path) {
             if fileManager.fileExists(atPath: mouseURL.path) {
-                try fileManager.moveItem(at: mouseURL, to: newMouseURL)
+                try fileManager.moveItem(at: mouseURL, to: destMouseURL)
             }
         }
 
-        return (newVideoURL, newMouseURL, projectFolderURL)
-    }
-
-    /// Path to the .fsproj file inside the project folder
-    func projectFileURL(in projectFolderURL: URL, name: String) -> URL {
-        return projectFolderURL.appendingPathComponent("\(name).\(Self.projectExtension)")
+        return packageURL
     }
 
     /// Find the mouse data file associated with a video
@@ -107,32 +104,28 @@ final class ProjectManager: ObservableObject {
 
     // MARK: - Save
 
-    /// Save a project
+    /// Save a project to its .screenize package
     /// - Parameters:
     ///   - project: Project to save
-    ///   - url: Save location (nil uses existing path or prompts)
-    /// - Returns: Saved file URL
+    ///   - url: Package URL (nil uses default location)
+    /// - Returns: Saved package URL
     func save(_ project: ScreenizeProject, to url: URL? = nil) async throws -> URL {
         let saveURL: URL
 
         if let url = url {
             saveURL = url
         } else {
-            // Default save location: same directory as the video file
-            let videoDirectory = project.media.videoURL.deletingLastPathComponent()
-            let projectName = project.media.videoURL.deletingPathExtension().lastPathComponent
-            saveURL = videoDirectory.appendingPathComponent("\(projectName).\(Self.projectExtension)")
+            // Default save location: ~/Movies/Screenize/<name>.screenize
+            let moviesDir = fileManager.urls(for: .moviesDirectory, in: .userDomainMask).first!
+            let screenizeDir = moviesDir.appendingPathComponent("Screenize")
+            if !fileManager.fileExists(atPath: screenizeDir.path) {
+                try fileManager.createDirectory(at: screenizeDir, withIntermediateDirectories: true)
+            }
+            saveURL = screenizeDir.appendingPathComponent("\(project.name).\(Self.projectExtension)")
         }
 
-        // JSON encoding
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        encoder.dateEncodingStrategy = .iso8601
-
-        let data = try encoder.encode(project)
-
-        // Write the file
-        try data.write(to: saveURL, options: .atomic)
+        // Delegate to ScreenizeProject.save(to:)
+        try project.save(to: saveURL)
 
         // Add to recent projects
         await addToRecentProjects(project, url: saveURL)
@@ -142,8 +135,8 @@ final class ProjectManager: ObservableObject {
 
     // MARK: - Load
 
-    /// Load a project
-    /// - Parameter url: Project file URL
+    /// Load a project from a .screenize package or legacy .fsproj file
+    /// - Parameter url: Package URL or legacy project file URL
     /// - Returns: Loaded project
     func load(from url: URL) async throws -> ScreenizeProject {
         isLoading = true
@@ -151,17 +144,24 @@ final class ProjectManager: ObservableObject {
 
         defer { isLoading = false }
 
-        // Read the file
-        let data = try Data(contentsOf: url)
+        // Auto-migrate legacy .fsproj files
+        if url.pathExtension.lowercased() == Self.legacyProjectExtension {
+            let packageURL = try migrateToPackage(legacyProjectURL: url)
+            let project = try ScreenizeProject.load(from: packageURL)
 
-        // JSON decoding
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
+            guard project.media.videoExists else {
+                throw ProjectManagerError.videoFileNotFound(project.media.videoURL)
+            }
 
-        let project = try decoder.decode(ScreenizeProject.self, from: data)
+            await addToRecentProjects(project, url: packageURL)
+            return project
+        }
+
+        // Load from package
+        let project = try ScreenizeProject.load(from: url)
 
         // Ensure the media file exists
-        guard fileManager.fileExists(atPath: project.media.videoURL.path) else {
+        guard project.media.videoExists else {
             throw ProjectManagerError.videoFileNotFound(project.media.videoURL)
         }
 
@@ -181,15 +181,52 @@ final class ProjectManager: ObservableObject {
         }
     }
 
+    // MARK: - Migration
+
+    /// Migrate a legacy .fsproj project to the .screenize package format
+    /// - Parameter legacyProjectURL: URL to the .fsproj file
+    /// - Returns: URL to the new .screenize package
+    func migrateToPackage(legacyProjectURL: URL) throws -> URL {
+        // Load the legacy project (single JSON file with absolute paths)
+        let data = try Data(contentsOf: legacyProjectURL)
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let legacyProject = try decoder.decode(ScreenizeProject.self, from: data)
+
+        let videoURL = legacyProject.media.videoURL
+        let mouseDataURL = legacyProject.media.mouseDataURL
+
+        // Create the package
+        let packageURL = try createPackage(for: videoURL, mouseDataURL: mouseDataURL)
+
+        // Create a new project with relative paths
+        var migratedProject = legacyProject
+        migratedProject.media = MediaAsset(
+            videoPath: "recording/video.mp4",
+            mouseDataPath: "recording/mouse.json",
+            packageURL: packageURL,
+            pixelSize: legacyProject.media.pixelSize,
+            frameRate: legacyProject.media.frameRate,
+            duration: legacyProject.media.duration
+        )
+        migratedProject.version = 2
+
+        try migratedProject.save(to: packageURL)
+
+        // Remove the old .fsproj file
+        try? fileManager.removeItem(at: legacyProjectURL)
+
+        return packageURL
+    }
+
     // MARK: - Recent Projects
 
     /// Add to recent projects
     private func addToRecentProjects(_ project: ScreenizeProject, url: URL) async {
         let info = RecentProjectInfo(
             id: project.id,
-            name: project.media.videoURL.deletingPathExtension().lastPathComponent,
+            name: project.name,
             projectURL: url,
-            videoURL: project.media.videoURL,
             duration: project.media.duration,
             lastOpened: Date()
         )
@@ -244,7 +281,7 @@ final class ProjectManager: ObservableObject {
 
     // MARK: - Delete
 
-    /// Delete a project file
+    /// Delete a project package
     func delete(at url: URL) throws {
         try fileManager.removeItem(at: url)
 
@@ -255,19 +292,27 @@ final class ProjectManager: ObservableObject {
 
     // MARK: - Utilities
 
-    /// Check if the URL points to a project file
+    /// Check if the URL points to a project file or package
     static func isProjectFile(_ url: URL) -> Bool {
-        url.pathExtension.lowercased() == projectExtension
+        let ext = url.pathExtension.lowercased()
+        return ext == projectExtension || ext == legacyProjectExtension
     }
 
-    /// Find the project file in the same directory as the video
+    /// Find an existing project for a video file
     func findExistingProject(for videoURL: URL) -> URL? {
-        let projectName = videoURL.deletingPathExtension().lastPathComponent
+        let videoName = videoURL.deletingPathExtension().lastPathComponent
         let directory = videoURL.deletingLastPathComponent()
-        let projectURL = directory.appendingPathComponent("\(projectName).\(Self.projectExtension)")
 
-        if fileManager.fileExists(atPath: projectURL.path) {
-            return projectURL
+        // Check for .screenize package first
+        let packageURL = directory.appendingPathComponent("\(videoName).\(Self.projectExtension)")
+        if fileManager.fileExists(atPath: packageURL.path) {
+            return packageURL
+        }
+
+        // Check for legacy .fsproj
+        let legacyURL = directory.appendingPathComponent("\(videoName).\(Self.legacyProjectExtension)")
+        if fileManager.fileExists(atPath: legacyURL.path) {
+            return legacyURL
         }
 
         return nil
@@ -281,7 +326,6 @@ struct RecentProjectInfo: Codable, Identifiable {
     let id: UUID
     let name: String
     let projectURL: URL
-    let videoURL: URL
     let duration: TimeInterval
     let lastOpened: Date
 

@@ -7,24 +7,27 @@ struct ProjectCreator {
 
     // MARK: - Create from Recording
 
-    /// Create a project from a recording
+    /// Create a project from a recording inside a .screenize package
     /// - Parameters:
-    ///   - videoURL: Recorded video file URL
-    ///   - mouseDataURL: Mouse data file URL
+    ///   - videoURL: Resolved video file URL (inside the package)
+    ///   - mouseDataURL: Resolved mouse data file URL (inside the package)
     ///   - captureMeta: Capture metadata
+    ///   - packageURL: Root URL of the .screenize package
     /// - Returns: New project
     static func createFromRecording(
         videoURL: URL,
         mouseDataURL: URL,
-        captureMeta: CaptureMeta
+        captureMeta: CaptureMeta,
+        packageURL: URL
     ) async throws -> ScreenizeProject {
         // Load video information
         let videoInfo = try await loadVideoInfo(from: videoURL)
 
-        // Create a media asset
+        // Create a media asset with relative paths
         let media = MediaAsset(
-            videoURL: videoURL,
-            mouseDataURL: mouseDataURL,
+            videoPath: "recording/video.mp4",
+            mouseDataPath: "recording/mouse.json",
+            packageURL: packageURL,
             pixelSize: videoInfo.size,
             frameRate: videoInfo.frameRate,
             duration: videoInfo.duration
@@ -33,9 +36,12 @@ struct ProjectCreator {
         // Create a default timeline
         let timeline = createDefaultTimeline(duration: videoInfo.duration)
 
+        // Project name from package directory name
+        let name = packageURL.deletingPathExtension().lastPathComponent
+
         // Create the project
         return ScreenizeProject(
-            name: videoURL.deletingPathExtension().lastPathComponent,
+            name: name,
             media: media,
             captureMeta: captureMeta,
             timeline: timeline,
@@ -45,25 +51,23 @@ struct ProjectCreator {
 
     // MARK: - Create from Video
 
-    /// Create a project from an existing video file
+    /// Create a project from an existing video file inside a .screenize package
     /// - Parameters:
-    ///   - videoURL: Video file URL
-    ///   - mouseDataURL: Mouse data file URL (falls back if nil)
+    ///   - videoURL: Resolved video file URL (inside the package)
+    ///   - packageURL: Root URL of the .screenize package
     /// - Returns: New project
     static func createFromVideo(
         videoURL: URL,
-        mouseDataURL: URL? = nil
+        packageURL: URL
     ) async throws -> ScreenizeProject {
         // Load video information
         let videoInfo = try await loadVideoInfo(from: videoURL)
 
-        // Mouse data URL (fall back to default if missing)
-        let mouseURL = mouseDataURL ?? findMouseDataURL(for: videoURL)
-
-        // Create a media asset
+        // Create a media asset with relative paths
         let media = MediaAsset(
-            videoURL: videoURL,
-            mouseDataURL: mouseURL,
+            videoPath: "recording/video.mp4",
+            mouseDataPath: "recording/mouse.json",
+            packageURL: packageURL,
             pixelSize: videoInfo.size,
             frameRate: videoInfo.frameRate,
             duration: videoInfo.duration
@@ -83,8 +87,11 @@ struct ProjectCreator {
         // Create a default timeline
         let timeline = createDefaultTimeline(duration: videoInfo.duration)
 
+        // Project name from package directory name
+        let name = packageURL.deletingPathExtension().lastPathComponent
+
         return ScreenizeProject(
-            name: videoURL.deletingPathExtension().lastPathComponent,
+            name: name,
             media: media,
             captureMeta: captureMeta,
             timeline: timeline,
@@ -118,31 +125,6 @@ struct ProjectCreator {
             frameRate: frameRate,
             duration: duration
         )
-    }
-
-    // MARK: - Mouse Data
-
-    private static func findMouseDataURL(for videoURL: URL) -> URL {
-        // Look for a .mouse.json file next to the video
-        let baseName = videoURL.deletingPathExtension().lastPathComponent
-        let directory = videoURL.deletingLastPathComponent()
-
-        // Candidate filenames to try
-        let candidates = [
-            "\(baseName).mouse.json",
-            "\(baseName)_mouse.json",
-            "mouse.json"
-        ]
-
-        for candidate in candidates {
-            let candidateURL = directory.appendingPathComponent(candidate)
-            if FileManager.default.fileExists(atPath: candidateURL.path) {
-                return candidateURL
-            }
-        }
-
-        // Return the default path if none are present (file may be created later)
-        return directory.appendingPathComponent("\(baseName).mouse.json")
     }
 
     // MARK: - Scale Factor Detection

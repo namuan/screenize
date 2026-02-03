@@ -348,7 +348,7 @@ final class AppState: ObservableObject {
 
     // MARK: - Project Creation
 
-    func createProject(videoURL: URL? = nil, mouseDataURL: URL? = nil) async -> ScreenizeProject? {
+    func createProject(videoURL: URL? = nil, mouseDataURL: URL? = nil, packageURL: URL? = nil) async -> ScreenizeProject? {
         guard let videoURL = videoURL ?? lastRecordingURL,
               let mouseDataURL = mouseDataURL ?? lastMouseDataURL else {
             return nil
@@ -386,14 +386,27 @@ final class AppState: ObservableObject {
             )
         }
 
-        // Create media asset
-        let media = MediaAsset(
-            videoURL: videoURL,
-            mouseDataURL: mouseDataURL,
-            pixelSize: CGSize(width: videoMetadata.width, height: videoMetadata.height),
-            frameRate: videoMetadata.frameRate,
-            duration: videoMetadata.duration
-        )
+        // Create media asset with relative or absolute paths
+        let media: MediaAsset
+        if let pkgURL = packageURL {
+            media = MediaAsset(
+                videoPath: "recording/video.mp4",
+                mouseDataPath: "recording/mouse.json",
+                packageURL: pkgURL,
+                pixelSize: CGSize(width: videoMetadata.width, height: videoMetadata.height),
+                frameRate: videoMetadata.frameRate,
+                duration: videoMetadata.duration
+            )
+        } else {
+            media = MediaAsset(
+                videoPath: videoURL.path,
+                mouseDataPath: mouseDataURL.path,
+                packageURL: nil,
+                pixelSize: CGSize(width: videoMetadata.width, height: videoMetadata.height),
+                frameRate: videoMetadata.frameRate,
+                duration: videoMetadata.duration
+            )
+        }
 
         // Generate default timeline
         let timeline = Timeline(
@@ -436,8 +449,16 @@ final class AppState: ObservableObject {
             renderSettings.windowInset = 0.0
         }
 
+        // Project name from package directory or video filename
+        let projectName: String
+        if let pkgURL = packageURL {
+            projectName = pkgURL.deletingPathExtension().lastPathComponent
+        } else {
+            projectName = videoURL.deletingPathExtension().lastPathComponent
+        }
+
         return ScreenizeProject(
-            name: videoURL.deletingPathExtension().lastPathComponent,
+            name: projectName,
             media: media,
             captureMeta: captureMeta,
             timeline: timeline,

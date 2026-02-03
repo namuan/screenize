@@ -1,5 +1,6 @@
 import SwiftUI
 import Sparkle
+import UniformTypeIdentifiers
 
 /// Screenize app entry point
 @main
@@ -32,6 +33,15 @@ struct ScreenizeApp: App {
             ContentView()
                 .environmentObject(projectManager)
                 .environmentObject(appState)
+                .onOpenURL { url in
+                    if ProjectManager.isProjectFile(url) {
+                        NotificationCenter.default.post(
+                            name: .openProjectFile,
+                            object: nil,
+                            userInfo: ["url": url]
+                        )
+                    }
+                }
         }
         .commands {
             // Add Check for Updates to the app menu
@@ -110,9 +120,10 @@ struct ScreenizeApp: App {
 
     private func openProjectFile() {
         let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.init(filenameExtension: ProjectManager.projectExtension)!]
+        panel.allowedContentTypes = [.screenizeProject]
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
+        panel.treatsFilePackagesAsDirectories = false
 
         if panel.runModal() == .OK, let url = panel.url {
             NotificationCenter.default.post(
@@ -226,18 +237,18 @@ struct ContentView: View {
 
     private func openVideo(url: URL) async {
         do {
-            // Create the project folder and move files
-            let result = try projectManager.createProjectFolder(for: url)
+            // Create a .screenize package and move the video into it
+            let packageURL = try projectManager.createPackage(for: url)
+            let videoURL = packageURL.appendingPathComponent("recording/video.mp4")
 
-            // Create a project from the moved files
+            // Create a project from the packaged files
             let project = try await ProjectCreator.createFromVideo(
-                videoURL: result.videoURL,
-                mouseDataURL: result.mouseDataURL
+                videoURL: videoURL,
+                packageURL: packageURL
             )
 
-            // Save the project
-            let projectURL = projectManager.projectFileURL(in: result.projectFolderURL, name: project.name)
-            let savedURL = try await projectManager.save(project, to: projectURL)
+            // Save project.json into the package
+            let savedURL = try await projectManager.save(project, to: packageURL)
 
             appState.currentProjectURL = savedURL
             appState.currentProject = project
@@ -263,17 +274,23 @@ struct ContentView: View {
         }
 
         do {
-            // Create the project folder and move files
-            let result = try projectManager.createProjectFolder(for: videoURL, mouseDataURL: mouseDataURL)
+            // Create a .screenize package and move media files into it
+            let packageURL = try projectManager.createPackage(for: videoURL, mouseDataURL: mouseDataURL)
 
-            // Create a project from the moved files
-            guard let project = await appState.createProject(videoURL: result.videoURL, mouseDataURL: result.mouseDataURL) else {
+            // Create a project from the packaged files
+            let resolvedVideoURL = packageURL.appendingPathComponent("recording/video.mp4")
+            let resolvedMouseURL = packageURL.appendingPathComponent("recording/mouse.json")
+
+            guard let project = await appState.createProject(
+                videoURL: resolvedVideoURL,
+                mouseDataURL: resolvedMouseURL,
+                packageURL: packageURL
+            ) else {
                 return
             }
 
-            // Save the project
-            let projectURL = projectManager.projectFileURL(in: result.projectFolderURL, name: project.name)
-            let savedURL = try await projectManager.save(project, to: projectURL)
+            // Save project.json into the package
+            let savedURL = try await projectManager.save(project, to: packageURL)
 
             appState.currentProjectURL = savedURL
             appState.currentProject = project
@@ -374,7 +391,7 @@ struct MainWelcomeView: View {
                 .font(.headline)
                 .foregroundColor(isDragging ? .accentColor : .secondary)
 
-            Text(".mp4, .mov, .m4v")
+            Text(".mp4, .mov, .m4v, .screenize")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
         }
@@ -404,8 +421,15 @@ struct MainWelcomeView: View {
                 return
             }
 
-            let validExtensions = ["mp4", "mov", "m4v", "mpeg4"]
-            if validExtensions.contains(url.pathExtension.lowercased()) {
+            let ext = url.pathExtension.lowercased()
+
+            if ext == ScreenizeProject.fileExtension {
+                // .screenize package
+                DispatchQueue.main.async {
+                    onOpenProject?(url)
+                }
+            } else if ["mp4", "mov", "m4v", "mpeg4"].contains(ext) {
+                // Video file
                 DispatchQueue.main.async {
                     onOpenVideo?(url)
                 }
@@ -427,8 +451,9 @@ struct MainWelcomeView: View {
 
     private func openProjectPanel() {
         let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.init(filenameExtension: ProjectManager.projectExtension)!]
+        panel.allowedContentTypes = [.screenizeProject]
         panel.allowsMultipleSelection = false
+        panel.treatsFilePackagesAsDirectories = false
 
         if panel.runModal() == .OK, let url = panel.url {
             onOpenProject?(url)

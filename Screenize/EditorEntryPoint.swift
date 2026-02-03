@@ -59,7 +59,7 @@ struct EditorEntryPoint {
             defer: false
         )
 
-        window.title = "Screenize Editor - \(project.media.videoURL.lastPathComponent)"
+        window.title = "Screenize Editor - \(project.name)"
         window.contentView = NSHostingView(rootView: EditorMainView(project: project))
         window.center()
         window.makeKeyAndOrderFront(nil)
@@ -183,17 +183,26 @@ struct EditorLoaderView: View {
             if let existingProjectURL = ProjectManager.shared.findExistingProject(for: videoURL) {
                 project = try await ProjectManager.shared.load(from: existingProjectURL)
             } else if let captureMeta = captureMeta, let mouseDataURL = mouseDataURL {
-                // Create a new project from the recording
+                // Create a .screenize package from the recording
+                let packageURL = try ProjectManager.shared.createPackage(
+                    for: videoURL, mouseDataURL: mouseDataURL
+                )
+                let resolvedVideoURL = packageURL.appendingPathComponent("recording/video.mp4")
                 project = try await ProjectCreator.createFromRecording(
-                    videoURL: videoURL,
-                    mouseDataURL: mouseDataURL,
-                    captureMeta: captureMeta
+                    videoURL: resolvedVideoURL,
+                    mouseDataURL: packageURL.appendingPathComponent("recording/mouse.json"),
+                    captureMeta: captureMeta,
+                    packageURL: packageURL
                 )
             } else {
-                // Create a new project from the video file
+                // Create a .screenize package from the video file
+                let packageURL = try ProjectManager.shared.createPackage(
+                    for: videoURL, mouseDataURL: mouseDataURL
+                )
+                let resolvedVideoURL = packageURL.appendingPathComponent("recording/video.mp4")
                 project = try await ProjectCreator.createFromVideo(
-                    videoURL: videoURL,
-                    mouseDataURL: mouseDataURL
+                    videoURL: resolvedVideoURL,
+                    packageURL: packageURL
                 )
             }
 
