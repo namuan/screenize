@@ -22,7 +22,7 @@ final class ProjectManager: ObservableObject {
     /// Project package extension
     static let projectExtension = "screenize"
 
-    /// Legacy project file extension
+    /// [LEGACY .fsproj] Legacy project file extension. Remove after migration period.
     static let legacyProjectExtension = "fsproj"
 
     /// Maximum number of recent projects
@@ -144,7 +144,8 @@ final class ProjectManager: ObservableObject {
 
         defer { isLoading = false }
 
-        // Auto-migrate legacy .fsproj files
+        // [LEGACY .fsproj] Auto-migrate legacy .fsproj files to .screenize package.
+        // Remove: Delete this entire if-block after migration period.
         if url.pathExtension.lowercased() == Self.legacyProjectExtension {
             let packageURL = try migrateToPackage(legacyProjectURL: url)
             let project = try ScreenizeProject.load(from: packageURL)
@@ -181,7 +182,8 @@ final class ProjectManager: ObservableObject {
         }
     }
 
-    // MARK: - Migration
+    // MARK: - Migration [LEGACY .fsproj]
+    // Remove: Delete this entire section after migration period.
 
     /// Migrate a legacy .fsproj project to the .screenize package format
     /// - Parameter legacyProjectURL: URL to the .fsproj file
@@ -295,6 +297,7 @@ final class ProjectManager: ObservableObject {
     /// Check if the URL points to a project file or package
     static func isProjectFile(_ url: URL) -> Bool {
         let ext = url.pathExtension.lowercased()
+        // [LEGACY .fsproj] Remove `|| ext == legacyProjectExtension` after migration period.
         return ext == projectExtension || ext == legacyProjectExtension
     }
 
@@ -309,7 +312,7 @@ final class ProjectManager: ObservableObject {
             return packageURL
         }
 
-        // Check for legacy .fsproj
+        // [LEGACY .fsproj] Check for legacy .fsproj. Remove this block after migration period.
         let legacyURL = directory.appendingPathComponent("\(videoName).\(Self.legacyProjectExtension)")
         if fileManager.fileExists(atPath: legacyURL.path) {
             return legacyURL
@@ -329,12 +332,13 @@ struct RecentProjectInfo: Codable, Identifiable {
     let duration: TimeInterval
     let lastOpened: Date
 
-    // MARK: - Codable (backward compatible)
+    // [LEGACY .fsproj] Custom Codable to ignore old `videoURL` key from UserDefaults.
+    // Remove: Delete CodingKeys, init(id:...), init(from:), encode(to:) and revert to
+    //         auto-synthesized Codable after migration period.
 
     private enum CodingKeys: String, CodingKey {
         case id, name, projectURL, duration, lastOpened
-        // Legacy key (ignored on decode, not encoded)
-        case videoURL
+        case videoURL  // [LEGACY .fsproj] Ignored on decode, never encoded.
     }
 
     init(id: UUID, name: String, projectURL: URL, duration: TimeInterval, lastOpened: Date) {
@@ -352,7 +356,6 @@ struct RecentProjectInfo: Codable, Identifiable {
         projectURL = try container.decode(URL.self, forKey: .projectURL)
         duration = try container.decode(TimeInterval.self, forKey: .duration)
         lastOpened = try container.decode(Date.self, forKey: .lastOpened)
-        // Legacy videoURL is silently ignored
     }
 
     func encode(to encoder: Encoder) throws {

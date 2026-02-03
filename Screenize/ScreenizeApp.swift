@@ -120,7 +120,8 @@ struct ScreenizeApp: App {
 
     private func openProjectFile() {
         let panel = NSOpenPanel()
-        // Accept both .screenize packages and legacy .fsproj files
+        // [LEGACY .fsproj] Accept both .screenize packages and legacy .fsproj files.
+        // Remove: Change to `panel.allowedContentTypes = [.screenizeProject]` after migration period.
         var contentTypes: [UTType] = [.screenizeProject]
         if let legacyType = UTType(filenameExtension: ProjectManager.legacyProjectExtension) {
             contentTypes.append(legacyType)
@@ -456,7 +457,8 @@ struct MainWelcomeView: View {
 
     private func openProjectPanel() {
         let panel = NSOpenPanel()
-        // Accept both .screenize packages and legacy .fsproj files
+        // [LEGACY .fsproj] Accept both .screenize packages and legacy .fsproj files.
+        // Remove: Change to `panel.allowedContentTypes = [.screenizeProject]` after migration period.
         var contentTypes: [UTType] = [.screenizeProject]
         if let legacyType = UTType(filenameExtension: ProjectManager.legacyProjectExtension) {
             contentTypes.append(legacyType)

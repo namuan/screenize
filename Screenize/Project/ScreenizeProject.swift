@@ -88,11 +88,12 @@ struct ScreenizeProject: Codable, Identifiable {
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
             var project = try decoder.decode(Self.self, from: data)
-            // Inject the package URL for relative path resolution
             project.media.packageURL = url
             return project
         } else {
-            // Legacy .fsproj format: single JSON file
+            // [LEGACY .fsproj] Single JSON file format.
+            // Remove: Delete this else-block and the isDirectory check after migration period.
+            // Keep only the package-format code above.
             let data = try Data(contentsOf: url)
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601

@@ -47,7 +47,8 @@ struct MediaAsset: Codable {
         if let base = packageURL {
             return base.appendingPathComponent(videoPath)
         }
-        // Legacy fallback: treat path as absolute
+        // [LEGACY .fsproj] Fallback: treat path as absolute for migrated legacy projects.
+        // Remove: Change to fatalError or require packageURL once all .fsproj projects are migrated.
         return URL(fileURLWithPath: videoPath)
     }
 
@@ -56,33 +57,34 @@ struct MediaAsset: Codable {
         if let base = packageURL {
             return base.appendingPathComponent(mouseDataPath)
         }
+        // [LEGACY .fsproj] Fallback: treat path as absolute for migrated legacy projects.
+        // Remove: Change to fatalError or require packageURL once all .fsproj projects are migrated.
         return URL(fileURLWithPath: mouseDataPath)
     }
 
     // MARK: - Codable
 
     private enum CodingKeys: String, CodingKey {
-        // New package format keys
         case videoPath, mouseDataPath
-        // Legacy .fsproj format keys
-        case videoURL, mouseDataURL
-        // Shared keys
+        case videoURL, mouseDataURL  // [LEGACY .fsproj] Remove these two cases after migration period.
         case pixelSize, frameRate, duration
     }
 
+    // [LEGACY .fsproj] Custom decoder handles both old absolute-URL format and new relative-path format.
+    // Remove: Replace with auto-synthesized Codable once all .fsproj projects are migrated.
+    // After removal, also delete the CodingKeys enum and encode(to:) below.
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         pixelSize = try container.decode(CGSize.self, forKey: .pixelSize)
         frameRate = try container.decode(Double.self, forKey: .frameRate)
         duration = try container.decode(TimeInterval.self, forKey: .duration)
 
-        // Try new relative path keys first, fall back to legacy absolute URL keys
         if let vPath = try container.decodeIfPresent(String.self, forKey: .videoPath) {
             videoPath = vPath
             mouseDataPath = try container.decodeIfPresent(String.self, forKey: .mouseDataPath)
                 ?? "recording/mouse.json"
         } else {
-            // Legacy format: absolute URLs stored as URL values
+            // [LEGACY .fsproj] Decode absolute URLs from old format
             let vURL = try container.decode(URL.self, forKey: .videoURL)
             let mURL = try container.decode(URL.self, forKey: .mouseDataURL)
             videoPath = vURL.path
@@ -91,6 +93,8 @@ struct MediaAsset: Codable {
         packageURL = nil
     }
 
+    // [LEGACY .fsproj] Explicit encoder only needed because of custom CodingKeys.
+    // Remove: Delete along with CodingKeys enum and init(from:) above.
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(videoPath, forKey: .videoPath)
