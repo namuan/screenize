@@ -329,6 +329,41 @@ struct RecentProjectInfo: Codable, Identifiable {
     let duration: TimeInterval
     let lastOpened: Date
 
+    // MARK: - Codable (backward compatible)
+
+    private enum CodingKeys: String, CodingKey {
+        case id, name, projectURL, duration, lastOpened
+        // Legacy key (ignored on decode, not encoded)
+        case videoURL
+    }
+
+    init(id: UUID, name: String, projectURL: URL, duration: TimeInterval, lastOpened: Date) {
+        self.id = id
+        self.name = name
+        self.projectURL = projectURL
+        self.duration = duration
+        self.lastOpened = lastOpened
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        projectURL = try container.decode(URL.self, forKey: .projectURL)
+        duration = try container.decode(TimeInterval.self, forKey: .duration)
+        lastOpened = try container.decode(Date.self, forKey: .lastOpened)
+        // Legacy videoURL is silently ignored
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(projectURL, forKey: .projectURL)
+        try container.encode(duration, forKey: .duration)
+        try container.encode(lastOpened, forKey: .lastOpened)
+    }
+
     /// Formatted date
     var formattedDate: String {
         let formatter = RelativeDateTimeFormatter()
