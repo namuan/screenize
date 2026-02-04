@@ -1,15 +1,6 @@
 {
-  "originHash" : "0d7f43bd7b7341a0009fecf5feb19f492d8b401779a0f1a9767c31036bf87aa9",
+  "originHash" : "1fa961aa1dc717cea452f3389668f0f99a254f07e4eb11d190768a53798f744f",
   "pins" : [
-    {
-      "identity" : "sparkle",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/sparkle-project/Sparkle",
-      "state" : {
-        "revision" : "5581748cef2bae787496fe6d61139aebe0a451f6",
-        "version" : "2.8.1"
-      }
-    },
     {
       "identity" : "swiftlintplugins",
       "kind" : "remoteSourceControl",

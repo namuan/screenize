@@ -1,5 +1,4 @@
 import SwiftUI
-import Sparkle
 
 /// Screenize app entry point
 @main
@@ -9,7 +8,6 @@ struct ScreenizeApp: App {
 
     @StateObject private var projectManager = ProjectManager.shared
     @StateObject private var appState = AppState.shared
-    @StateObject private var sparkleController = SparkleController()
 
     // MARK: - Initialization
 
@@ -34,11 +32,6 @@ struct ScreenizeApp: App {
                 .environmentObject(appState)
         }
         .commands {
-            // Add Check for Updates to the app menu
-            CommandGroup(after: .appInfo) {
-                CheckForUpdatesView(sparkleController: sparkleController)
-            }
-
             CommandGroup(replacing: .newItem) {
                 Button("New Recording...") {
                     appState.showSourcePicker = true

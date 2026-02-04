@@ -4,8 +4,5 @@
 <dict>
 	<key>com.apple.security.files.user-selected.read-write</key>
 	<true/>
-	<!-- Network access for Sparkle updates -->
-	<key>com.apple.security.network.client</key>
-	<true/>
 </dict>
 </plist>
