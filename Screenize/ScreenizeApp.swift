@@ -8,6 +8,7 @@ struct ScreenizeApp: App {
 
     @StateObject private var projectManager = ProjectManager.shared
     @StateObject private var appState = AppState.shared
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
 
     // MARK: - Initialization
 
@@ -27,7 +28,7 @@ struct ScreenizeApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(hasCompletedOnboarding: $hasCompletedOnboarding)
                 .environmentObject(projectManager)
                 .environmentObject(appState)
         }
@@ -59,6 +60,12 @@ struct ScreenizeApp: App {
                 }
                 .keyboardShortcut("2", modifiers: [.command, .shift])
                 .disabled(appState.selectedTarget == nil && !appState.isRecording && !appState.isCountingDown)
+            }
+            
+            CommandGroup(after: .help) {
+                Button("Show Permissions...") {
+                    hasCompletedOnboarding = false
+                }
             }
         }
     }
@@ -102,11 +109,16 @@ struct ContentView: View {
 
     @EnvironmentObject var projectManager: ProjectManager
     @EnvironmentObject var appState: AppState
+    @Binding var hasCompletedOnboarding: Bool
     @State private var isCreatingProject: Bool = false
 
     var body: some View {
         Group {
-            if let project = appState.currentProject {
+            if !hasCompletedOnboarding {
+                OnboardingView(onComplete: {
+                    hasCompletedOnboarding = true
+                })
+            } else if let project = appState.currentProject {
                 // Show the editor when a project exists
                 EditorMainView(project: project, projectURL: appState.currentProjectURL)
                     .id(project.id) // Force view rebuild when the project changes

@@ -96,6 +96,57 @@ struct AnnotationInspector: View {
                 .lineLimit(2...6)
                 .textFieldStyle(.roundedBorder)
                 .onSubmit { onChange?() }
+
+            // Context fields
+            if keyframe.type == .text {
+                Divider()
+
+                Text("Context")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(.secondary)
+
+                HStack {
+                    Text("Label")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                        .frame(width: 50, alignment: .leading)
+
+                    TextField("App name", text: Binding(
+                        get: { keyframe.contextLabel ?? "" },
+                        set: { keyframe.contextLabel = $0.isEmpty ? nil : $0; onChange?() }
+                    ))
+                    .textFieldStyle(.roundedBorder)
+                    .font(.system(size: 11))
+                }
+
+                HStack {
+                    Text("Icon")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                        .frame(width: 50, alignment: .leading)
+
+                    TextField("SF Symbol", text: Binding(
+                        get: { keyframe.contextIcon ?? "" },
+                        set: { keyframe.contextIcon = $0.isEmpty ? nil : $0; onChange?() }
+                    ))
+                    .textFieldStyle(.roundedBorder)
+                    .font(.system(size: 11))
+                }
+
+                HStack {
+                    Text("Path")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                        .frame(width: 50, alignment: .leading)
+
+                    TextField("File > Save", text: Binding(
+                        get: { keyframe.contextHierarchy ?? "" },
+                        set: { keyframe.contextHierarchy = $0.isEmpty ? nil : $0; onChange?() }
+                    ))
+                    .textFieldStyle(.roundedBorder)
+                    .font(.system(size: 11))
+                }
+            }
         }
     }
 

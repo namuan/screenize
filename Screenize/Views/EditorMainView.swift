@@ -477,11 +477,12 @@ struct GeneratorPanelView: View {
         let rippleCount = viewModel.project.timeline.rippleTrack?.keyframes.count ?? 0
         let cursorCount = viewModel.project.timeline.cursorTrack?.styleKeyframes?.count ?? 0
         let keystrokeCount = viewModel.project.timeline.keystrokeTrack?.keyframes.count ?? 0
+        let annotationCount = viewModel.project.timeline.annotationTrack?.keyframes.count ?? 0
 
         if let error = viewModel.errorMessage {
             generationResult = "Failed: \(error)"
         } else {
-            generationResult = "\(transformCount) transform, \(rippleCount) ripple, \(cursorCount) cursor, \(keystrokeCount) keystroke"
+            generationResult = "\(transformCount) transform, \(rippleCount) ripple, \(cursorCount) cursor, \(keystrokeCount) keystroke, \(annotationCount) annotation"
         }
 
         isGenerating = false

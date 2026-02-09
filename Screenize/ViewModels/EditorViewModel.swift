@@ -285,15 +285,20 @@ final class EditorViewModel: ObservableObject {
             let keystrokeGenerator = KeystrokeGenerator()
             let keystrokeTrack = keystrokeGenerator.generate(from: mouseDataSource, settings: settings)
 
+            // 8. Run the Annotation generator
+            let annotationGenerator = AnnotationGenerator()
+            let annotationTrack = annotationGenerator.generate(from: mouseDataSource, settings: settings)
+
             // Update the timeline
             updateTimeline(
                 transformTrack: transformTrack,
                 rippleTrack: rippleTrack,
                 cursorTrack: cursorTrack,
-                keystrokeTrack: keystrokeTrack
+                keystrokeTrack: keystrokeTrack,
+                annotationTrack: annotationTrack
             )
 
-            print("Smart Zoom generation completed: \(transformTrack.keyframes.count) transform, \(rippleTrack.keyframes.count) ripple, \(cursorTrack.styleKeyframes?.count ?? 0) cursor, \(keystrokeTrack.keyframes.count) keystroke keyframes")
+            print("Smart Zoom generation completed: \(transformTrack.keyframes.count) transform, \(rippleTrack.keyframes.count) ripple, \(cursorTrack.styleKeyframes?.count ?? 0) cursor, \(keystrokeTrack.keyframes.count) keystroke, \(annotationTrack.keyframes.count) annotation keyframes")
 
             hasUnsavedChanges = true
             invalidatePreviewCache()
@@ -317,7 +322,8 @@ final class EditorViewModel: ObservableObject {
         transformTrack: TransformTrack,
         rippleTrack: RippleTrack,
         cursorTrack: CursorTrack? = nil,
-        keystrokeTrack: KeystrokeTrack? = nil
+        keystrokeTrack: KeystrokeTrack? = nil,
+        annotationTrack: AnnotationTrack? = nil
     ) {
         // Update the transform track
         if let index = project.timeline.tracks.firstIndex(where: { $0.trackType == .transform }) {
@@ -348,6 +354,15 @@ final class EditorViewModel: ObservableObject {
                 project.timeline.tracks[index] = .keystroke(keystrokeTrack)
             } else {
                 project.timeline.tracks.append(.keystroke(keystrokeTrack))
+            }
+        }
+
+        // Update the annotation track (if present)
+        if let annotationTrack = annotationTrack {
+            if let index = project.timeline.tracks.firstIndex(where: { $0.trackType == .annotation }) {
+                project.timeline.tracks[index] = .annotation(annotationTrack)
+            } else {
+                project.timeline.tracks.append(.annotation(annotationTrack))
             }
         }
     }

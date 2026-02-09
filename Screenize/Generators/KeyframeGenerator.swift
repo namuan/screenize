@@ -308,6 +308,10 @@ struct GeneratorSettings: Codable {
 
     var keystroke = KeystrokeGeneratorSettings()
 
+    // MARK: - Annotation
+
+    var annotation = AnnotationGeneratorSettings()
+
     static let `default` = Self()
 }
 
@@ -591,6 +595,32 @@ struct KeystrokeGeneratorSettings: Codable {
 
     /// Minimum interval (auto-repeat filtering)
     var minInterval: TimeInterval = 0.05
+}
+
+// MARK: - Annotation Generator Settings
+
+/// Annotation generator settings
+struct AnnotationGeneratorSettings: Codable {
+    var enabled: Bool = true
+
+    var includeClickAnnotations: Bool = true
+    var includeKeyboardShortcuts: Bool = true
+    var includeGenericClicks: Bool = false
+
+    var displayDuration: TimeInterval = 2.0
+    var fadeInDuration: TimeInterval = 0.15
+    var fadeOutDuration: TimeInterval = 0.3
+    var minInterval: TimeInterval = 1.0
+    var maxTitleLength: Int = 30
+
+    var fontScale: CGFloat = 0.035
+    var textColor: RGBAColor = .white
+    var backgroundColor: RGBAColor = RGBAColor(r: 0.08, g: 0.08, b: 0.08, a: 0.78)
+
+    var annotationOffset: NormalizedPoint = NormalizedPoint(x: 0.05, y: -0.08)
+    var keyboardAnnotationPosition: NormalizedPoint = NormalizedPoint(x: 0.5, y: 0.1)
+
+    static let `default` = Self()
 }
 
 // MARK: - Mouse Data Cleaner Settings

@@ -538,6 +538,11 @@ struct AnnotationKeyframe: TimedKeyframe, Equatable {
     var textColor: RGBAColor          // Text color
     var textBackgroundColor: RGBAColor // Background color (supports alpha)
 
+    // Context (app name, action type, hierarchy)
+    var contextLabel: String?        // e.g., "Safari" or "Xcode"
+    var contextIcon: String?         // SF Symbol name for action icon
+    var contextHierarchy: String?    // e.g., "File > Save"
+
     // Arrow
     var arrowStart: NormalizedPoint  // Tail position (UI uses top-left origin)
     var arrowEnd: NormalizedPoint    // Head position (UI uses top-left origin)
@@ -560,6 +565,10 @@ struct AnnotationKeyframe: TimedKeyframe, Equatable {
         case fontScale
         case textColor
         case textBackgroundColor
+
+        case contextLabel
+        case contextIcon
+        case contextHierarchy
 
         case arrowStart
         case arrowEnd
@@ -589,6 +598,9 @@ struct AnnotationKeyframe: TimedKeyframe, Equatable {
         fontScale: CGFloat = 0.04,
         textColor: RGBAColor = .white,
         textBackgroundColor: RGBAColor = RGBAColor(r: 0.08, g: 0.08, b: 0.08, a: 0.78),
+        contextLabel: String? = nil,
+        contextIcon: String? = nil,
+        contextHierarchy: String? = nil,
         arrowStart: NormalizedPoint = NormalizedPoint(x: 0.35, y: 0.35),
         arrowEnd: NormalizedPoint = NormalizedPoint(x: 0.65, y: 0.55),
         arrowColor: RGBAColor = .yellow,
@@ -607,6 +619,9 @@ struct AnnotationKeyframe: TimedKeyframe, Equatable {
         self.fontScale = max(0.015, min(0.12, fontScale))
         self.textColor = textColor
         self.textBackgroundColor = textBackgroundColor
+        self.contextLabel = contextLabel
+        self.contextIcon = contextIcon
+        self.contextHierarchy = contextHierarchy
         self.arrowStart = arrowStart.clamped()
         self.arrowEnd = arrowEnd.clamped()
         self.arrowColor = arrowColor
@@ -647,6 +662,10 @@ struct AnnotationKeyframe: TimedKeyframe, Equatable {
         let textBackgroundColor = try container.decodeIfPresent(RGBAColor.self, forKey: .textBackgroundColor)
             ?? RGBAColor(r: 0.08, g: 0.08, b: 0.08, a: 0.78)
 
+        let contextLabel = try container.decodeIfPresent(String.self, forKey: .contextLabel)
+        let contextIcon = try container.decodeIfPresent(String.self, forKey: .contextIcon)
+        let contextHierarchy = try container.decodeIfPresent(String.self, forKey: .contextHierarchy)
+
         let arrowStart = try container.decodeIfPresent(NormalizedPoint.self, forKey: .arrowStart)
             ?? NormalizedPoint(x: 0.35, y: 0.35)
         let arrowEnd = try container.decodeIfPresent(NormalizedPoint.self, forKey: .arrowEnd)
@@ -669,6 +688,9 @@ struct AnnotationKeyframe: TimedKeyframe, Equatable {
             fontScale: fontScale,
             textColor: textColor,
             textBackgroundColor: textBackgroundColor,
+            contextLabel: contextLabel,
+            contextIcon: contextIcon,
+            contextHierarchy: contextHierarchy,
             arrowStart: arrowStart,
             arrowEnd: arrowEnd,
             arrowColor: arrowColor,

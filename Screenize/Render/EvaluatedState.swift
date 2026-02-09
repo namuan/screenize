@@ -321,6 +321,11 @@ struct ActiveAnnotation {
     let textColor: RGBAColor
     let textBackgroundColor: RGBAColor
 
+    // Context
+    let contextLabel: String?
+    let contextIcon: String?
+    let contextHierarchy: String?
+
     // Arrow
     let arrowStart: NormalizedPoint
     let arrowEnd: NormalizedPoint
@@ -337,6 +342,9 @@ struct ActiveAnnotation {
         fontScale: CGFloat,
         textColor: RGBAColor,
         textBackgroundColor: RGBAColor,
+        contextLabel: String? = nil,
+        contextIcon: String? = nil,
+        contextHierarchy: String? = nil,
         arrowStart: NormalizedPoint,
         arrowEnd: NormalizedPoint,
         arrowColor: RGBAColor,
@@ -351,6 +359,9 @@ struct ActiveAnnotation {
         self.fontScale = max(0.015, min(0.12, fontScale))
         self.textColor = textColor
         self.textBackgroundColor = textBackgroundColor
+        self.contextLabel = contextLabel
+        self.contextIcon = contextIcon
+        self.contextHierarchy = contextHierarchy
 
         self.arrowStart = arrowStart
         self.arrowEnd = arrowEnd
@@ -368,6 +379,9 @@ struct ActiveAnnotation {
         self.fontScale = keyframe.fontScale
         self.textColor = keyframe.textColor
         self.textBackgroundColor = keyframe.textBackgroundColor
+        self.contextLabel = keyframe.contextLabel
+        self.contextIcon = keyframe.contextIcon
+        self.contextHierarchy = keyframe.contextHierarchy
         self.arrowStart = keyframe.arrowStart
         self.arrowEnd = keyframe.arrowEnd
         self.arrowColor = keyframe.arrowColor

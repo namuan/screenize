@@ -61,6 +61,8 @@
 		F000007A296A0001 /* KeystrokeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100007A296A0001 /* KeystrokeGenerator.swift */; };
 		F000007B296A0001 /* KeystrokeInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100007B296A0001 /* KeystrokeInspector.swift */; };
 		F000007C296A0001 /* AnnotationInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100007C296A0001 /* AnnotationInspector.swift */; };
+		F000007D296A0001 /* AnnotationGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100007D296A0001 /* AnnotationGenerator.swift */; };
+		F000007E296A0001 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100007E296A0001 /* OnboardingView.swift */; };
 		F0000080296A0001 /* EditorEntryPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000080296A0001 /* EditorEntryPoint.swift */; };
 		F0000081296A0001 /* ScreenizeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1000081296A0001 /* ScreenizeApp.swift */; };
 		F0000090296A0001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F1000090296A0001 /* Assets.xcassets */; };
@@ -159,6 +161,8 @@
 		F100007A296A0001 /* KeystrokeGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeystrokeGenerator.swift; sourceTree = "<group>"; };
 		F100007B296A0001 /* KeystrokeInspector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeystrokeInspector.swift; sourceTree = "<group>"; };
 		F100007C296A0001 /* AnnotationInspector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationInspector.swift; sourceTree = "<group>"; };
+		F100007D296A0001 /* AnnotationGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotationGenerator.swift; sourceTree = "<group>"; };
+		F100007E296A0001 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		F1000080296A0001 /* EditorEntryPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorEntryPoint.swift; sourceTree = "<group>"; };
 		F1000081296A0001 /* ScreenizeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenizeApp.swift; sourceTree = "<group>"; };
 		F1000090296A0001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -318,6 +322,7 @@
 				F1000050296A0001 /* PreviewView.swift */,
 				F1000051296A0001 /* ExportView.swift */,
 				F1000052296A0001 /* EditorMainView.swift */,
+				F100007E296A0001 /* OnboardingView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -370,6 +375,7 @@
 				F1000078296A0001 /* ZoomContextAnalyzer.swift */,
 				F1000079296A0001 /* MouseDataCleaner.swift */,
 				F100007A296A0001 /* KeystrokeGenerator.swift */,
+				F100007D296A0001 /* AnnotationGenerator.swift */,
 				F2000200296A0001 /* SmartZoom */,
 			);
 			path = Generators;
@@ -616,6 +622,8 @@
 				F0000078296A0001 /* ZoomContextAnalyzer.swift in Sources */,
 				F0000079296A0001 /* MouseDataCleaner.swift in Sources */,
 				F000007A296A0001 /* KeystrokeGenerator.swift in Sources */,
+				F000007D296A0001 /* AnnotationGenerator.swift in Sources */,
+				F000007E296A0001 /* OnboardingView.swift in Sources */,
 				F0000200296A0001 /* ActivityCollector.swift in Sources */,
 				F0000201296A0001 /* SessionClusterer.swift in Sources */,
 				F0000202296A0001 /* ZoomLevelCalculator.swift in Sources */,

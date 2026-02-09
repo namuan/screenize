@@ -306,13 +306,16 @@ final class EffectCompositor {
     private func renderSingleTextAnnotation(_ annotation: ActiveAnnotation, frameSize: CGSize) -> CIImage? {
         let baseFontSize: CGFloat = max(16, frameSize.height * annotation.fontScale)
         let font = NSFont.systemFont(ofSize: baseFontSize, weight: .semibold)
+        let smallFont = NSFont.systemFont(ofSize: baseFontSize * 0.7, weight: .medium)
         let cornerRadius: CGFloat = baseFontSize * 0.55
         let paddingH: CGFloat = baseFontSize * 0.9
         let paddingV: CGFloat = baseFontSize * 0.55
         let maxTextWidth: CGFloat = min(frameSize.width * 0.75, 900)
+        let contextSpacing: CGFloat = baseFontSize * 0.25
 
         let textColor = annotation.textColor.multipliedAlpha(annotation.opacity)
         let backgroundColor = annotation.textBackgroundColor.multipliedAlpha(annotation.opacity)
+        let contextColor = RGBAColor(r: 0.7, g: 0.7, b: 0.7, a: annotation.opacity)
 
         let backgroundLuma = (annotation.textBackgroundColor.r * 0.2126)
             + (annotation.textBackgroundColor.g * 0.7152)
@@ -324,10 +327,17 @@ final class EffectCompositor {
         paragraph.lineBreakMode = .byWordWrapping
         paragraph.alignment = .center
 
-        let attributes: [NSAttributedString.Key: Any] = [
+        let textAttributes: [NSAttributedString.Key: Any] = [
             .font: font,
             .foregroundColor: (NSColor(cgColor: textColor.cgColor) ?? NSColor.white)
                 .withAlphaComponent(textColor.a),
+            .paragraphStyle: paragraph
+        ]
+
+        let contextAttributes: [NSAttributedString.Key: Any] = [
+            .font: smallFont,
+            .foregroundColor: (NSColor(cgColor: contextColor.cgColor) ?? NSColor.gray)
+                .withAlphaComponent(contextColor.a),
             .paragraphStyle: paragraph
         ]
 
@@ -336,12 +346,39 @@ final class EffectCompositor {
         let textRect = text.boundingRect(
             with: constraint,
             options: [NSString.DrawingOptions.usesLineFragmentOrigin, NSString.DrawingOptions.usesFontLeading],
-            attributes: attributes
+            attributes: textAttributes
         )
 
+        var totalHeight = ceil(textRect.height)
+        var contextRect = CGRect.zero
+        var hierarchyRect = CGRect.zero
+
+        // Measure context label if present
+        if let contextLabel = annotation.contextLabel, !contextLabel.isEmpty {
+            let contextText = contextLabel as NSString
+            contextRect = contextText.boundingRect(
+                with: constraint,
+                options: [NSString.DrawingOptions.usesLineFragmentOrigin, NSString.DrawingOptions.usesFontLeading],
+                attributes: contextAttributes
+            )
+            totalHeight += ceil(contextRect.height) + contextSpacing
+        }
+
+        // Measure hierarchy if present
+        if let hierarchy = annotation.contextHierarchy, !hierarchy.isEmpty {
+            let hierarchyText = hierarchy as NSString
+            hierarchyRect = hierarchyText.boundingRect(
+                with: constraint,
+                options: [NSString.DrawingOptions.usesLineFragmentOrigin, NSString.DrawingOptions.usesFontLeading],
+                attributes: contextAttributes
+            )
+            totalHeight += ceil(hierarchyRect.height) + contextSpacing
+        }
+
         let textSize = CGSize(width: ceil(textRect.width), height: ceil(textRect.height))
-        let bubbleWidth = textSize.width + paddingH * 2
-        let bubbleHeight = textSize.height + paddingV * 2
+        let maxContentWidth = max(textSize.width, contextRect.width, hierarchyRect.width)
+        let bubbleWidth = maxContentWidth + paddingH * 2
+        let bubbleHeight = totalHeight + paddingV * 2
         let bitmapWidth = Int(ceil(bubbleWidth))
         let bitmapHeight = Int(ceil(bubbleHeight))
 
@@ -371,9 +408,45 @@ final class EffectCompositor {
         path.lineWidth = 1
         path.stroke()
 
-        // Text is drawn in a top-left origin style; flip into the NSGraphicsContext coordinate space.
-        let drawRect = CGRect(x: paddingH, y: paddingV, width: textSize.width, height: textSize.height)
-        text.draw(with: drawRect, options: [NSString.DrawingOptions.usesLineFragmentOrigin, NSString.DrawingOptions.usesFontLeading], attributes: attributes)
+        // Calculate Y positions (flip coordinate for NSGraphicsContext)
+        var currentY = bubbleHeight - paddingV
+
+        // Draw hierarchy (top)
+        if let hierarchy = annotation.contextHierarchy, !hierarchy.isEmpty {
+            let hierarchyText = hierarchy as NSString
+            currentY -= ceil(hierarchyRect.height)
+            let drawRect = CGRect(
+                x: paddingH + (maxContentWidth - hierarchyRect.width) / 2,
+                y: currentY,
+                width: ceil(hierarchyRect.width),
+                height: ceil(hierarchyRect.height)
+            )
+            hierarchyText.draw(with: drawRect, options: [NSString.DrawingOptions.usesLineFragmentOrigin, NSString.DrawingOptions.usesFontLeading], attributes: contextAttributes)
+            currentY -= contextSpacing
+        }
+
+        // Draw context label (middle)
+        if let contextLabel = annotation.contextLabel, !contextLabel.isEmpty {
+            let contextText = contextLabel as NSString
+            currentY -= ceil(contextRect.height)
+            let drawRect = CGRect(
+                x: paddingH + (maxContentWidth - contextRect.width) / 2,
+                y: currentY,
+                width: ceil(contextRect.width),
+                height: ceil(contextRect.height)
+            )
+            contextText.draw(with: drawRect, options: [NSString.DrawingOptions.usesLineFragmentOrigin, NSString.DrawingOptions.usesFontLeading], attributes: contextAttributes)
+            currentY -= contextSpacing
+        }
+
+        // Draw main text (bottom)
+        let textDrawRect = CGRect(
+            x: paddingH + (maxContentWidth - textSize.width) / 2,
+            y: paddingV,
+            width: textSize.width,
+            height: textSize.height
+        )
+        text.draw(with: textDrawRect, options: [NSString.DrawingOptions.usesLineFragmentOrigin, NSString.DrawingOptions.usesFontLeading], attributes: textAttributes)
 
         NSGraphicsContext.restoreGraphicsState()
 
