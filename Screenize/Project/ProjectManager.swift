@@ -244,12 +244,47 @@ final class ProjectManager: ObservableObject {
 
     // MARK: - Delete
 
-    /// Delete a project file
+    /// Delete a project file (only the .fsproj file)
     func delete(at url: URL) throws {
         try fileManager.removeItem(at: url)
 
         // Also remove it from recent projects
         recentProjects.removeAll { $0.projectURL == url }
+        saveRecentProjects()
+    }
+
+    /// Delete a project and all associated files
+    /// - Parameters:
+    ///   - info: Recent project info
+    ///   - deleteMediaFiles: Whether to delete video and mouse data files
+    func deleteProject(_ info: RecentProjectInfo, deleteMediaFiles: Bool = true) throws {
+        if deleteMediaFiles {
+            let projectFolder = info.projectURL.deletingLastPathComponent()
+
+            if projectFolder.pathExtension == Self.projectExtension {
+                let parentFolder = projectFolder.deletingLastPathComponent()
+                if fileManager.fileExists(atPath: projectFolder.path) {
+                    try fileManager.removeItem(at: projectFolder)
+                }
+            } else {
+                if fileManager.fileExists(atPath: info.videoURL.path) {
+                    try fileManager.removeItem(at: info.videoURL)
+                }
+                let mouseDataURL = info.videoURL.deletingPathExtension().appendingPathExtension("mouse.json")
+                if fileManager.fileExists(atPath: mouseDataURL.path) {
+                    try fileManager.removeItem(at: mouseDataURL)
+                }
+                if fileManager.fileExists(atPath: info.projectURL.path) {
+                    try fileManager.removeItem(at: info.projectURL)
+                }
+            }
+        } else {
+            if fileManager.fileExists(atPath: info.projectURL.path) {
+                try fileManager.removeItem(at: info.projectURL)
+            }
+        }
+
+        recentProjects.removeAll { $0.id == info.id }
         saveRecentProjects()
     }
 

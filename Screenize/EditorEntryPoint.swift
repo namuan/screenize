@@ -339,8 +339,39 @@ struct RecentProjectsView: View {
                 projectManager.removeFromRecent(info.id)
             }
 
+            Divider()
+
             Button("Show in Finder") {
                 NSWorkspace.shared.activateFileViewerSelecting([info.projectURL])
+            }
+
+            Divider()
+
+            Button(role: .destructive) {
+                deleteProject(info)
+            } label: {
+                Label("Delete Project", systemImage: "trash")
+            }
+        }
+    }
+
+    private func deleteProject(_ info: RecentProjectInfo) {
+        let alert = NSAlert()
+        alert.messageText = "Delete Project?"
+        alert.informativeText = "This will permanently delete the project file and all associated media files. This action cannot be undone."
+        alert.alertStyle = .critical
+        alert.addButton(withTitle: "Delete")
+        alert.addButton(withTitle: "Cancel")
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            do {
+                try projectManager.deleteProject(info)
+            } catch {
+                let errorAlert = NSAlert()
+                errorAlert.messageText = "Delete Failed"
+                errorAlert.informativeText = error.localizedDescription
+                errorAlert.alertStyle = .critical
+                errorAlert.runModal()
             }
         }
     }
