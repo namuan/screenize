@@ -17,10 +17,14 @@ struct EditorMainView: View {
     /// Show the Smart generator panel
     @State private var showGeneratorPanel = false
 
+    /// Callback when editor is closed
+    var onClose: () -> Void = {}
+
     // MARK: - Initialization
 
-    init(project: ScreenizeProject, projectURL: URL? = nil) {
+    init(project: ScreenizeProject, projectURL: URL? = nil, onClose: @escaping () -> Void = {}) {
         self._viewModel = StateObject(wrappedValue: EditorViewModel(project: project, projectURL: projectURL))
+        self.onClose = onClose
     }
 
     // MARK: - Body
@@ -140,6 +144,19 @@ struct EditorMainView: View {
 
     private var toolbar: some View {
         HStack(spacing: 16) {
+            // Close button
+            Button {
+                onClose()
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.title3)
+            }
+            .buttonStyle(.plain)
+            .help("Close Editor")
+
+            Divider()
+                .frame(height: 20)
+
             // Playback controls
             playbackControls
 

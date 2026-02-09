@@ -120,8 +120,15 @@ struct ContentView: View {
                 })
             } else if let project = appState.currentProject {
                 // Show the editor when a project exists
-                EditorMainView(project: project, projectURL: appState.currentProjectURL)
-                    .id(project.id) // Force view rebuild when the project changes
+                EditorMainView(
+                    project: project,
+                    projectURL: appState.currentProjectURL,
+                    onClose: {
+                        appState.currentProject = nil
+                        appState.currentProjectURL = nil
+                    }
+                )
+                .id(project.id) // Force view rebuild when the project changes
             } else if appState.showEditor || isCreatingProject {
                 // Display loader while creating project after recording
                 VStack {
