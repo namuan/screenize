@@ -260,9 +260,14 @@ final class ProjectManager: ObservableObject {
     func deleteProject(_ info: RecentProjectInfo, deleteMediaFiles: Bool = true) throws {
         if deleteMediaFiles {
             let projectFolder = info.projectURL.deletingLastPathComponent()
+            let projectName = info.projectURL.deletingPathExtension().lastPathComponent
+            let folderName = projectFolder.lastPathComponent
 
-            if projectFolder.pathExtension == Self.projectExtension {
-                let parentFolder = projectFolder.deletingLastPathComponent()
+            if folderName == projectName {
+                if fileManager.fileExists(atPath: projectFolder.path) {
+                    try fileManager.removeItem(at: projectFolder)
+                }
+            } else if projectFolder.pathExtension == Self.projectExtension {
                 if fileManager.fileExists(atPath: projectFolder.path) {
                     try fileManager.removeItem(at: projectFolder)
                 }
