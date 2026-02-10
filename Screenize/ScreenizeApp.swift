@@ -61,11 +61,21 @@ struct ScreenizeApp: App {
                 .keyboardShortcut("2", modifiers: [.command, .shift])
                 .disabled(appState.selectedTarget == nil && !appState.isRecording && !appState.isCountingDown)
             }
-            
+
             CommandGroup(after: .help) {
                 Button("Show Permissions...") {
                     hasCompletedOnboarding = false
                 }
+            }
+
+            CommandGroup(replacing: .sidebar) {
+                Button("Show Main Window") {
+                    NSApplication.shared.windows.first?.makeKeyAndOrderFront(nil)
+                    appState.currentProject = nil
+                    appState.currentProjectURL = nil
+                    appState.showSourcePicker = false
+                }
+                .keyboardShortcut("0", modifiers: .command)
             }
         }
     }
