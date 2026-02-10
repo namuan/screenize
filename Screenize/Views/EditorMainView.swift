@@ -500,6 +500,7 @@ struct GeneratorPanelView: View {
             generationResult = "Failed: \(error)"
         } else {
             generationResult = "\(transformCount) transform, \(rippleCount) ripple, \(cursorCount) cursor, \(keystrokeCount) keystroke, \(annotationCount) annotation"
+            dismiss()
         }
 
         isGenerating = false
