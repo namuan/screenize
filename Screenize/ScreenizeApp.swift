@@ -71,7 +71,14 @@ struct ScreenizeApp: App {
 
             CommandGroup(replacing: .sidebar) {
                 Button("Show Main Window") {
-                    openWindow(id: "main")
+                    let windows = NSApplication.shared.windows
+                    if let existingWindow = windows.first(where: { 
+                        $0.identifier?.rawValue.hasPrefix("main-") == true 
+                    }) {
+                        existingWindow.makeKeyAndOrderFront(nil)
+                    } else {
+                        openWindow(id: "main")
+                    }
                     appState.currentProject = nil
                     appState.currentProjectURL = nil
                     appState.showSourcePicker = false
@@ -130,7 +137,6 @@ struct ContentView: View {
                     hasCompletedOnboarding = true
                 })
             } else if let project = appState.currentProject {
-                // Show the editor when a project exists
                 EditorMainView(
                     project: project,
                     projectURL: appState.currentProjectURL,
@@ -139,9 +145,8 @@ struct ContentView: View {
                         appState.currentProjectURL = nil
                     }
                 )
-                .id(project.id) // Force view rebuild when the project changes
+                .id(project.id)
             } else if appState.showEditor || isCreatingProject {
-                // Display loader while creating project after recording
                 VStack {
                     ProgressView()
                     Text("Creating project...")
@@ -161,10 +166,8 @@ struct ContentView: View {
                     }
                 }
             } else if appState.isRecording || appState.selectedTarget != nil || appState.showSourcePicker {
-                // Recording in progress or source selected → show recording view
                 RecordingView(appState: appState)
             } else {
-                // Initial state → welcome view
                 MainWelcomeView(
                     onStartRecording: {
                         appState.showSourcePicker = true
@@ -182,6 +185,7 @@ struct ContentView: View {
                 )
             }
         }
+        .accessibilityIdentifier("main")
         .onReceive(NotificationCenter.default.publisher(for: .openVideoFile)) { notification in
             if let url = notification.userInfo?["url"] as? URL {
                 Task {
