@@ -9,6 +9,7 @@ struct ScreenizeApp: App {
     @StateObject private var projectManager = ProjectManager.shared
     @StateObject private var appState = AppState.shared
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
+    @Environment(\.openWindow) private var openWindow
 
     // MARK: - Initialization
 
@@ -27,7 +28,7 @@ struct ScreenizeApp: App {
     // MARK: - Body
 
     var body: some Scene {
-        WindowGroup {
+        WindowGroup(id: "main") {
             ContentView(hasCompletedOnboarding: $hasCompletedOnboarding)
                 .environmentObject(projectManager)
                 .environmentObject(appState)
@@ -70,7 +71,7 @@ struct ScreenizeApp: App {
 
             CommandGroup(replacing: .sidebar) {
                 Button("Show Main Window") {
-                    NSApplication.shared.windows.first?.makeKeyAndOrderFront(nil)
+                    openWindow(id: "main")
                     appState.currentProject = nil
                     appState.currentProjectURL = nil
                     appState.showSourcePicker = false
