@@ -176,14 +176,7 @@ struct KeystrokeInspector: View {
 
             // Visual position picker
             PositionPicker(
-                x: Binding(
-                    get: { keyframe.position.x },
-                    set: { keyframe.position = NormalizedPoint(x: $0, y: keyframe.position.y); onChange?() }
-                ),
-                y: Binding(
-                    get: { keyframe.position.y },
-                    set: { keyframe.position = NormalizedPoint(x: keyframe.position.x, y: $0); onChange?() }
-                ),
+                position: $keyframe.position,
                 color: KeyframeColor.keystroke,
                 onChange: onChange
             )

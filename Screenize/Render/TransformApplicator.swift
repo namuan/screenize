@@ -129,13 +129,13 @@ final class TransformApplicator {
         let cropWidth = sourceSize.width / transform.zoom
         let cropHeight = sourceSize.height / transform.zoom
 
-        // Position the crop around the center (centerX/Y are normalized 0-1 coordinates)
-        let centerX = transform.centerX * sourceSize.width
-        let centerY = transform.centerY * sourceSize.height
+        // Position the crop around the center (center.x/y are normalized 0-1 coordinates)
+        let cx = transform.center.x * sourceSize.width
+        let cy = transform.center.y * sourceSize.height
 
         // Crop origin (with boundary clamping)
-        var cropX = centerX - cropWidth / 2
-        var cropY = centerY - cropHeight / 2
+        var cropX = cx - cropWidth / 2
+        var cropY = cy - cropHeight / 2
 
         // Clamp the crop so it stays within the image bounds
         cropX = clamp(cropX, min: 0, max: sourceSize.width - cropWidth)
@@ -180,18 +180,18 @@ extension TransformApplicator {
 
     /// Clamp a transform into its valid range
     func sanitize(transform: TransformState, sourceSize: CGSize) -> TransformState {
-        var zoom = max(1.0, transform.zoom)
-        var centerX = clamp(transform.centerX, min: 0, max: 1)
-        var centerY = clamp(transform.centerY, min: 0, max: 1)
+        let zoom = max(1.0, transform.zoom)
+        let centerX = clamp(transform.center.x, min: 0, max: 1)
+        let centerY = clamp(transform.center.y, min: 0, max: 1)
 
         // Adjust the allowed center range based on zoom level
         // Higher zoom levels prevent the center from reaching the edges
         let halfCropRatioX = 0.5 / zoom
         let halfCropRatioY = 0.5 / zoom
 
-        centerX = clamp(centerX, min: halfCropRatioX, max: 1 - halfCropRatioX)
-        centerY = clamp(centerY, min: halfCropRatioY, max: 1 - halfCropRatioY)
+        let clampedX = clamp(centerX, min: halfCropRatioX, max: 1 - halfCropRatioX)
+        let clampedY = clamp(centerY, min: halfCropRatioY, max: 1 - halfCropRatioY)
 
-        return TransformState(zoom: zoom, centerX: centerX, centerY: centerY)
+        return TransformState(zoom: zoom, center: NormalizedPoint(x: clampedX, y: clampedY))
     }
 }

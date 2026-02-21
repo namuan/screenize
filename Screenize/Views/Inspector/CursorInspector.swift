@@ -119,15 +119,11 @@ struct CursorInspector: View {
 
             if let position = keyframe.position {
                 // Visual position picker
-                // SwiftUI uses a top-left origin while NormalizedPoint uses bottom-left, so invert Y
+                // SwiftUI uses a top-left origin while NormalizedPoint uses bottom-left, so invert Y for display
                 PositionPicker(
-                    x: Binding(
-                        get: { position.x },
-                        set: { keyframe.position = NormalizedPoint(x: $0, y: keyframe.position?.y ?? position.y) }
-                    ),
-                    y: Binding(
-                        get: { 1 - position.y },
-                        set: { keyframe.position = NormalizedPoint(x: keyframe.position?.x ?? position.x, y: 1 - $0) }
+                    position: Binding(
+                        get: { NormalizedPoint(x: position.x, y: 1 - position.y) },
+                        set: { keyframe.position = NormalizedPoint(x: $0.x, y: 1 - $0.y) }
                     ),
                     color: KeyframeColor.cursor,
                     onChange: onChange

@@ -85,8 +85,7 @@ struct RippleInspector: View {
 
             // Visual position picker
             PositionPicker(
-                x: $keyframe.x,
-                y: $keyframe.y,
+                position: $keyframe.position,
                 color: keyframe.color.color,
                 onChange: onChange
             )
@@ -100,11 +99,14 @@ struct RippleInspector: View {
                         .foregroundColor(.secondary)
                         .frame(width: 16)
 
-                    Slider(value: $keyframe.x, in: 0...1)
+                    Slider(value: Binding(
+                        get: { keyframe.position.x },
+                        set: { keyframe.position = NormalizedPoint(x: $0, y: keyframe.position.y); onChange?() }
+                    ), in: 0...1)
 
                     TextField("", value: Binding(
-                        get: { Double(keyframe.x) },
-                        set: { keyframe.x = CGFloat($0); onChange?() }
+                        get: { Double(keyframe.position.x) },
+                        set: { keyframe.position = NormalizedPoint(x: CGFloat($0), y: keyframe.position.y); onChange?() }
                     ), format: .number.precision(.fractionLength(2)))
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 50)
@@ -116,11 +118,14 @@ struct RippleInspector: View {
                         .foregroundColor(.secondary)
                         .frame(width: 16)
 
-                    Slider(value: $keyframe.y, in: 0...1)
+                    Slider(value: Binding(
+                        get: { keyframe.position.y },
+                        set: { keyframe.position = NormalizedPoint(x: keyframe.position.x, y: $0); onChange?() }
+                    ), in: 0...1)
 
                     TextField("", value: Binding(
-                        get: { Double(keyframe.y) },
-                        set: { keyframe.y = CGFloat($0); onChange?() }
+                        get: { Double(keyframe.position.y) },
+                        set: { keyframe.position = NormalizedPoint(x: keyframe.position.x, y: CGFloat($0)); onChange?() }
                     ), format: .number.precision(.fractionLength(2)))
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 50)
@@ -215,13 +220,30 @@ struct RippleInspector: View {
 /// Position picker
 struct PositionPicker: View {
 
-    @Binding var x: CGFloat
-    @Binding var y: CGFloat
+    @Binding var position: NormalizedPoint
 
     var color: Color = .purple
     var onChange: (() -> Void)?
 
     @State private var isDragging = false
+
+    init(position: Binding<NormalizedPoint>, color: Color = .purple, onChange: (() -> Void)? = nil) {
+        self._position = position
+        self.color = color
+        self.onChange = onChange
+    }
+
+    init(x: Binding<CGFloat>, y: Binding<CGFloat>, color: Color = .purple, onChange: (() -> Void)? = nil) {
+        self._position = Binding(
+            get: { NormalizedPoint(x: x.wrappedValue, y: y.wrappedValue) },
+            set: { newValue in
+                x.wrappedValue = newValue.x
+                y.wrappedValue = newValue.y
+            }
+        )
+        self.color = color
+        self.onChange = onChange
+    }
 
     var body: some View {
         GeometryReader { geometry in
@@ -246,8 +268,8 @@ struct PositionPicker: View {
                     )
                     .shadow(color: color.opacity(0.5), radius: isDragging ? 8 : 4)
                     .position(
-                        x: x * size.width,
-                        y: y * size.height
+                        x: position.x * size.width,
+                        y: position.y * size.height
                     )
                     .animation(.easeInOut(duration: 0.15), value: isDragging)
             }
@@ -256,8 +278,10 @@ struct PositionPicker: View {
                 DragGesture(minimumDistance: 0)
                     .onChanged { value in
                         isDragging = true
-                        x = max(0, min(1, value.location.x / size.width))
-                        y = max(0, min(1, value.location.y / size.height))
+                        position = NormalizedPoint(
+                            x: max(0, min(1, value.location.x / size.width)),
+                            y: max(0, min(1, value.location.y / size.height))
+                        )
                         onChange?()
                     }
                     .onEnded { _ in

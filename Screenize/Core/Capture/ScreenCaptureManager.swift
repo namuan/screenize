@@ -342,13 +342,6 @@ final class RecordingFinishSignal: @unchecked Sendable {
 
     /// Wait for finalization to complete (returns immediately if already done)
     func wait() async {
-        lock.lock()
-        if isFinished {
-            lock.unlock()
-            return
-        }
-        lock.unlock()
-
         await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
             self.lock.lock()
             if self.isFinished {

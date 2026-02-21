@@ -111,10 +111,8 @@ final class CFRRecordingManager: @unchecked Sendable {
             let duration = recordingStartTime.map { Date().timeIntervalSince($0) } ?? 0
             print("🎬 [CFRRecordingManager] CFR recording ended: \(frameIndex) frames, \(String(format: "%.2f", duration))s")
 
-            // Cleanup
-            frameLock.lock()
+            // Cleanup (recording is stopped, no need for lock)
             lastValidPixelBuffer = nil
-            frameLock.unlock()
 
             videoWriter = nil
             outputURL = nil
@@ -127,9 +125,8 @@ final class CFRRecordingManager: @unchecked Sendable {
             print("❌ [CFRRecordingManager] Failed to stop recording: \(error)")
             videoWriter?.cancelWriting()
 
-            frameLock.lock()
+            // Cleanup (recording is stopped, no need for lock)
             lastValidPixelBuffer = nil
-            frameLock.unlock()
 
             videoWriter = nil
 

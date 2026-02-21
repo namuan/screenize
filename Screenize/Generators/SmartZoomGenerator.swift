@@ -309,14 +309,13 @@ final class SmartZoomGenerator {
         keyframes.map { kf in
             guard kf.zoom > 1.0 else { return kf }
             let halfCropRatio = 0.5 / kf.zoom
-            let clampedX = max(halfCropRatio, min(1.0 - halfCropRatio, kf.centerX))
-            let clampedY = max(halfCropRatio, min(1.0 - halfCropRatio, kf.centerY))
+            let clampedX = max(halfCropRatio, min(1.0 - halfCropRatio, kf.center.x))
+            let clampedY = max(halfCropRatio, min(1.0 - halfCropRatio, kf.center.y))
             return TransformKeyframe(
                 id: kf.id,
                 time: kf.time,
                 zoom: kf.zoom,
-                centerX: clampedX,
-                centerY: clampedY,
+                center: NormalizedPoint(x: clampedX, y: clampedY),
                 easing: kf.easing
             )
         }

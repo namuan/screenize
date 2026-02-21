@@ -42,7 +42,7 @@ private class VerticalToHorizontalScrollView: NSScrollView {
         if abs(event.scrollingDeltaY) > abs(event.scrollingDeltaX) {
             // Create a new event to reuse deltaY as deltaX
             let newEvent = event.cgEvent?.copy()
-            if let cgEvent = newEvent {
+            if newEvent != nil {
                 // Use scrollingDeltaY and apply it as scrollingDeltaX
                 // Set the scroll values directly on the CGEvent
                 let deltaY = event.scrollingDeltaY

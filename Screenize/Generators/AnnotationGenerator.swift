@@ -115,7 +115,7 @@ final class AnnotationGenerator: KeyframeGenerator {
         let role = element.role
         let title = element.title?.trimmingCharacters(in: .whitespacesAndNewlines)
         let appName = element.applicationName
-        var contextLabel = appName
+        let contextLabel = appName
         var contextIcon: String? = nil
         var contextHierarchy: String? = nil
         var text: String

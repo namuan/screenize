@@ -133,8 +133,7 @@ struct TransformInspector: View {
 
             // Visual center picker
             CenterPointPicker(
-                centerX: $keyframe.centerX,
-                centerY: $keyframe.centerY,
+                center: $keyframe.center,
                 onChange: onChange
             )
             .frame(height: 120)
@@ -147,11 +146,14 @@ struct TransformInspector: View {
                         .foregroundColor(.secondary)
                         .frame(width: 16)
 
-                    Slider(value: $keyframe.centerX, in: 0...1)
+                    Slider(value: Binding(
+                        get: { keyframe.center.x },
+                        set: { keyframe.center = NormalizedPoint(x: $0, y: keyframe.center.y); onChange?() }
+                    ), in: 0...1)
 
                     TextField("", value: Binding(
-                        get: { Double(keyframe.centerX) },
-                        set: { keyframe.centerX = CGFloat($0); onChange?() }
+                        get: { Double(keyframe.center.x) },
+                        set: { keyframe.center = NormalizedPoint(x: CGFloat($0), y: keyframe.center.y); onChange?() }
                     ), format: .number.precision(.fractionLength(2)))
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 50)
@@ -163,11 +165,14 @@ struct TransformInspector: View {
                         .foregroundColor(.secondary)
                         .frame(width: 16)
 
-                    Slider(value: $keyframe.centerY, in: 0...1)
+                    Slider(value: Binding(
+                        get: { keyframe.center.y },
+                        set: { keyframe.center = NormalizedPoint(x: keyframe.center.x, y: $0); onChange?() }
+                    ), in: 0...1)
 
                     TextField("", value: Binding(
-                        get: { Double(keyframe.centerY) },
-                        set: { keyframe.centerY = CGFloat($0); onChange?() }
+                        get: { Double(keyframe.center.y) },
+                        set: { keyframe.center = NormalizedPoint(x: keyframe.center.x, y: CGFloat($0)); onChange?() }
                     ), format: .number.precision(.fractionLength(2)))
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 50)
@@ -177,8 +182,7 @@ struct TransformInspector: View {
             // Reset center button
             Button("Reset to Center") {
                 withAnimation(.easeInOut(duration: 0.2)) {
-                    keyframe.centerX = 0.5
-                    keyframe.centerY = 0.5
+                    keyframe.center = .center
                 }
                 onChange?()
             }
@@ -204,8 +208,7 @@ struct TransformInspector: View {
 /// Visual center picker
 struct CenterPointPicker: View {
 
-    @Binding var centerX: CGFloat
-    @Binding var centerY: CGFloat
+    @Binding var center: NormalizedPoint
 
     var onChange: (() -> Void)?
 
@@ -273,9 +276,9 @@ struct CenterPointPicker: View {
     }
 
     private func crosshair(in size: CGSize) -> some View {
-        let x = centerX * size.width
+        let x = center.x * size.width
         // Flip Y axis: convert from CoreImage bottom-left to SwiftUI top-left
-        let y = (1 - centerY) * size.height
+        let y = (1 - center.y) * size.height
 
         return ZStack {
             // Vertical line
@@ -293,9 +296,9 @@ struct CenterPointPicker: View {
     }
 
     private func centerPoint(in size: CGSize) -> some View {
-        let x = centerX * size.width
+        let x = center.x * size.width
         // Flip Y axis: convert from CoreImage bottom-left to SwiftUI top-left
-        let y = (1 - centerY) * size.height
+        let y = (1 - center.y) * size.height
 
         return Circle()
             .fill(Color.accentColor)
@@ -314,8 +317,7 @@ struct CenterPointPicker: View {
         // Flip Y axis: convert from SwiftUI top-left to CoreImage bottom-left
         let newY = max(0, min(1, 1 - (location.y / size.height)))
 
-        centerX = newX
-        centerY = newY
+        center = NormalizedPoint(x: newX, y: newY)
         onChange?()
     }
 }
@@ -327,14 +329,13 @@ struct CenterPointPicker: View {
         @State private var keyframe = TransformKeyframe(
             time: 2.5,
             zoom: 2.0,
-            centerX: 0.3,
-            centerY: 0.4,
+            center: NormalizedPoint(x: 0.3, y: 0.4),
             easing: .easeOut
         )
 
         var body: some View {
             TransformInspector(keyframe: $keyframe) {
-                print("Changed: zoom=\(keyframe.zoom), center=(\(keyframe.centerX), \(keyframe.centerY))")
+                print("Changed: zoom=\(keyframe.zoom), center=(\(keyframe.center.x), \(keyframe.center.y))")
             }
             .frame(width: 280)
         }

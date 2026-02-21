@@ -277,11 +277,12 @@ final class ExportEngine: ObservableObject {
             }
 
             // Completed
+            let finalFrameIndex = frameIndex
             await MainActor.run {
                 progress = .completed(outputURL)
                 statistics = ExportStatistics(
-                    totalFrames: frameIndex,
-                    processedFrames: frameIndex,
+                    totalFrames: finalFrameIndex,
+                    processedFrames: finalFrameIndex,
                     startTime: startTime,
                     currentTime: Date()
                 )
