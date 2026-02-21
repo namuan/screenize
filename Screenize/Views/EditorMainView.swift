@@ -229,6 +229,7 @@ struct EditorMainView: View {
             }
             .buttonStyle(.plain)
             .keyboardShortcut(.home, modifiers: [])
+            .help("Go to Start (Home)")
 
             // Previous frame
             Button {
@@ -240,6 +241,7 @@ struct EditorMainView: View {
             }
             .buttonStyle(.plain)
             .keyboardShortcut(.leftArrow, modifiers: [])
+            .help("Previous Frame (\u{2190})")
 
             // Jump backward a few seconds
             Button {
@@ -251,6 +253,7 @@ struct EditorMainView: View {
             }
             .buttonStyle(.plain)
             .keyboardShortcut(.leftArrow, modifiers: [.option])
+            .help("Jump Backward 5s (\u{2325}\u{2190})")
 
             // Play/Pause
             Button {
@@ -261,6 +264,7 @@ struct EditorMainView: View {
             }
             .buttonStyle(.plain)
             .keyboardShortcut(.space, modifiers: [])
+            .help("Play/Pause (Space)")
 
             // Next frame
             Button {
@@ -272,6 +276,7 @@ struct EditorMainView: View {
             }
             .buttonStyle(.plain)
             .keyboardShortcut(.rightArrow, modifiers: [])
+            .help("Next Frame (\u{2192})")
 
             // Jump forward a few seconds
             Button {
@@ -283,6 +288,7 @@ struct EditorMainView: View {
             }
             .buttonStyle(.plain)
             .keyboardShortcut(.rightArrow, modifiers: [.option])
+            .help("Jump Forward 5s (\u{2325}\u{2192})")
 
             // To end
             Button {
@@ -294,6 +300,7 @@ struct EditorMainView: View {
             }
             .buttonStyle(.plain)
             .keyboardShortcut(.end, modifiers: [])
+            .help("Go to End (End)")
 
             // Time display
             Text(formatTime(viewModel.currentTime))
