@@ -19,6 +19,9 @@ struct OnboardingView: View {
         .onAppear {
             refreshPermissions()
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            refreshPermissions()
+        }
     }
 
     private var headerSection: some View {
@@ -58,8 +61,8 @@ struct OnboardingView: View {
                     title: "Input Monitoring",
                     description: "Required to track keyboard shortcuts for smart annotations and keystroke overlays.",
                     status: inputMonitoringStatus,
-                    isRequired: false,
-                    action: { requestInputMonitoringPermission() },
+                    isRequired: true,
+                    action: { await requestInputMonitoringPermission() },
                     openSettingsAction: { openInputMonitoringSettings() }
                 )
 
@@ -68,7 +71,7 @@ struct OnboardingView: View {
                     title: "Microphone",
                     description: "Required to record audio commentary during screen recordings.",
                     status: microphoneStatus,
-                    isRequired: false,
+                    isRequired: true,
                     action: { await requestMicrophonePermission() },
                     openSettingsAction: { openMicrophoneSettings() }
                 )
@@ -78,8 +81,8 @@ struct OnboardingView: View {
                     title: "Accessibility",
                     description: "Required to detect UI elements (buttons, menus) for contextual annotations.",
                     status: accessibilityStatus.status,
-                    isRequired: false,
-                    action: { requestAccessibilityPermission() },
+                    isRequired: true,
+                    action: { await requestAccessibilityPermission() },
                     openSettingsAction: { openAccessibilitySettings() }
                 )
             }
@@ -104,6 +107,12 @@ struct OnboardingView: View {
 
             Spacer()
 
+            if !missingRequiredPermissions.isEmpty {
+                Text("Grant \(missingRequiredPermissions.joined(separator: ", ")) to continue.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
             Button("Continue") {
                 onComplete()
             }
@@ -118,6 +127,31 @@ struct OnboardingView: View {
 
     private var hasRequiredPermissions: Bool {
         permissionsManager.hasScreenCapturePermission
+            && permissionsManager.hasInputMonitoringPermission
+            && permissionsManager.hasMicrophonePermission
+            && accessibilityStatus.status == .granted
+    }
+
+    private var missingRequiredPermissions: [String] {
+        var missing: [String] = []
+
+        if !permissionsManager.hasScreenCapturePermission {
+            missing.append("Screen Recording")
+        }
+
+        if !permissionsManager.hasInputMonitoringPermission {
+            missing.append("Input Monitoring")
+        }
+
+        if !permissionsManager.hasMicrophonePermission {
+            missing.append("Microphone")
+        }
+
+        if accessibilityStatus.status != .granted {
+            missing.append("Accessibility")
+        }
+
+        return missing
     }
 
     private var screenCaptureStatus: PermissionRow.Status {
@@ -153,18 +187,24 @@ struct OnboardingView: View {
 
     private func requestScreenCapturePermission() async {
         _ = await permissionsManager.requestScreenCapturePermission()
+        refreshPermissions()
     }
 
     private func requestMicrophonePermission() async {
         _ = await permissionsManager.requestMicrophonePermission()
+        refreshPermissions()
     }
 
-    private func requestInputMonitoringPermission() {
+    private func requestInputMonitoringPermission() async {
         permissionsManager.requestInputMonitoringPermission()
+        try? await Task.sleep(nanoseconds: 500_000_000)
+        refreshPermissions()
     }
 
-    private func requestAccessibilityPermission() {
+    private func requestAccessibilityPermission() async {
         accessibilityStatus.requestPermission()
+        try? await Task.sleep(nanoseconds: 1_200_000_000)
+        refreshPermissions()
     }
 
     // MARK: - System Settings URLs

@@ -128,13 +128,16 @@ struct ContentView: View {
     @EnvironmentObject var projectManager: ProjectManager
     @EnvironmentObject var appState: AppState
     @Binding var hasCompletedOnboarding: Bool
+    @StateObject private var permissionsManager = PermissionsManager()
+    @StateObject private var accessibilityStatus = AccessibilityStatus()
     @State private var isCreatingProject: Bool = false
 
     var body: some View {
         Group {
-            if !hasCompletedOnboarding {
+            if shouldShowOnboarding {
                 OnboardingView(onComplete: {
                     hasCompletedOnboarding = true
+                    refreshPermissionGate()
                 })
             } else if let project = appState.currentProject {
                 EditorMainView(
@@ -186,6 +189,12 @@ struct ContentView: View {
             }
         }
         .accessibilityIdentifier("main")
+        .onAppear {
+            refreshPermissionGate()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            refreshPermissionGate()
+        }
         .onReceive(NotificationCenter.default.publisher(for: .openVideoFile)) { notification in
             if let url = notification.userInfo?["url"] as? URL {
                 Task {
@@ -210,6 +219,22 @@ struct ContentView: View {
                 }
             }
         }
+    }
+
+    private var shouldShowOnboarding: Bool {
+        !hasCompletedOnboarding || !hasRequiredPermissions
+    }
+
+    private var hasRequiredPermissions: Bool {
+        permissionsManager.hasScreenCapturePermission
+            && permissionsManager.hasInputMonitoringPermission
+            && permissionsManager.hasMicrophonePermission
+            && accessibilityStatus.status == .granted
+    }
+
+    private func refreshPermissionGate() {
+        permissionsManager.checkCurrentPermissions()
+        accessibilityStatus.checkStatus()
     }
 
     private func openVideo(url: URL) async {
