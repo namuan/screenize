@@ -5,7 +5,7 @@ This guide explains how to build and install Screenize locally on your Mac.
 ## Requirements
 
 - macOS 13.0 or later
-- Xcode 14.0 or later
+- Swift toolchain with Swift Package Manager (`swift --version`)
 
 ## Build and Install
 
@@ -17,16 +17,13 @@ This guide explains how to build and install Screenize locally on your Mac.
 
 2. **Build the application**:
    ```bash
-   xcodebuild -project Screenize.xcodeproj \
-              -scheme Screenize \
-              -configuration Release \
-              -derivedDataPath ./build \
-              clean build
+   ./scripts/package_app.sh release
    ```
 
 3. **Install to ~/Applications**:
    ```bash
-   cp -R ./build/Build/Products/Release/Screenize.app ~/Applications/
+   mkdir -p ~/Applications
+   cp -R ./Screenize.app ~/Applications/
    ```
 
 4. **Launch the application**:
@@ -63,12 +60,8 @@ To update to the latest version, pull the latest changes and rebuild:
 ```bash
 cd screenize
 git pull origin main
-xcodebuild -project Screenize.xcodeproj \
-           -scheme Screenize \
-           -configuration Release \
-           -derivedDataPath ./build \
-           clean build
-cp -R ./build/Build/Products/Release/Screenize.app ~/Applications/
+./scripts/package_app.sh release
+cp -R ./Screenize.app ~/Applications/
 ```
 
 ## Uninstalling
@@ -94,8 +87,8 @@ tccutil reset Microphone com.screenize.Screenize
 
 If you encounter build errors:
 
-1. Ensure you have the latest version of Xcode installed
-2. Clean the build directory: `rm -rf ./build`
+1. Ensure `swift --version` works and reports a recent Swift toolchain
+2. Clean SwiftPM artifacts: `rm -rf ./.build ./Screenize.app ./dist`
 3. Try building again
 
 For more information, see [CONTRIBUTING.md](CONTRIBUTING.md).

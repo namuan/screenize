@@ -32,6 +32,9 @@ Temporary Items
 
 ## Build generated
 build/
+.build/
+dist/
+*.app
 DerivedData/
 
 ## Xcode generated

@@ -14,7 +14,7 @@ Please be respectful and constructive in all interactions. We are committed to p
 2. If not, open a new issue with:
    - Steps to reproduce the bug
    - Expected behavior vs. actual behavior
-   - Your environment (macOS version, Xcode version)
+   - Your environment (macOS version, Swift toolchain version)
    - Screenshots or screen recordings if applicable
 
 ### Suggesting Enhancements
@@ -40,10 +40,14 @@ Please be respectful and constructive in all interactions. We are committed to p
 ```bash
 git clone https://github.com/YOUR_USERNAME/screenize.git
 cd screenize
-open Screenize.xcodeproj
+swift build
 ```
 
-Build with Cmd+B in Xcode. Run with Cmd+R.
+Run the app locally:
+
+```bash
+./scripts/compile_and_run.sh
+```
 
 **Permissions:** Screenize requires Screen Recording, Microphone, and Accessibility permissions. If permissions break during development, reset them:
 

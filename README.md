@@ -29,6 +29,16 @@ Screenize uses a two-pass processing model: first capture raw video alongside mo
 ### Requirements
 
 - macOS 13.0 or later
+- Swift toolchain with Swift Package Manager
+
+### Build from Source (No Xcode)
+
+```bash
+git clone https://github.com/syi0808/screenize.git
+cd screenize
+./scripts/package_app.sh release
+open ./Screenize.app
+```
 
 ### Download
 

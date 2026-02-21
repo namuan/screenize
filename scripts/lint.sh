@@ -27,7 +27,6 @@ fi
 if [ -z "$SWIFTLINT" ]; then
     echo "Error: SwiftLint not found"
     echo "Install with: brew install swiftlint"
-    echo "Or add SwiftLint package to your Xcode project"
     exit 1
 fi
 

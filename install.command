@@ -1,9 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
 OPEN_APP=false
 DEBUG_BUILD=false
+APP_BUNDLE_ID="com.screenize.Screenize"
 
-# Parse command line arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
         -open|--open)
@@ -22,27 +23,22 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Determine build configuration
+echo "Resetting macOS privacy permissions for ${APP_BUNDLE_ID}..."
+tccutil reset All "${APP_BUNDLE_ID}" || true
+
 if [ "$DEBUG_BUILD" = true ]; then
-    BUILD_CONFIG="Debug"
-    BUILD_DIR="Debug"
-    echo "Building DEBUG configuration..."
+    CONFIG="debug"
 else
-    BUILD_CONFIG="Release"
-    BUILD_DIR="Release"
-    echo "Building RELEASE configuration..."
+    CONFIG="release"
 fi
 
-xcodebuild -project Screenize.xcodeproj \
-           -scheme Screenize \
-           -configuration "$BUILD_CONFIG" \
-           -derivedDataPath ./build \
-           clean build
-cp -R ./build/Build/Products/"$BUILD_DIR"/Screenize.app ~/Applications/
-rm -rf ./build
+"$(dirname "$0")/scripts/package_app.sh" "$CONFIG"
+mkdir -p "$HOME/Applications"
+rm -rf "$HOME/Applications/Screenize.app"
+cp -R "$(dirname "$0")/Screenize.app" "$HOME/Applications/Screenize.app"
 
-# Open the application if -open flag was specified
+echo "Installed Screenize.app to ~/Applications"
+
 if [ "$OPEN_APP" = true ]; then
-    echo "Opening Screenize.app..."
-    open ~/Applications/Screenize.app
+    open "$HOME/Applications/Screenize.app"
 fi
