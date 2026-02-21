@@ -1,72 +1,66 @@
 # Installation Guide
 
-This guide explains how to build and install Screenize locally on your Mac.
+This guide explains how to build and install Screenize locally on macOS.
 
 ## Requirements
 
-- macOS 13.0 or later
+- macOS 13.0+
 - Swift toolchain with Swift Package Manager (`swift --version`)
 
-## Build and Install
+## Quick Install
 
-1. **Clone the repository** (if you haven't already):
-   ```bash
-   git clone https://github.com/syi0808/screenize.git
-   cd screenize
-   ```
+```bash
+git clone https://github.com/syi0808/screenize.git
+cd screenize
+./install.command --open
+```
 
-2. **Build the application**:
-   ```bash
-   ./scripts/package_app.sh release
-   ```
+`install.command` will:
+1. Reset TCC permissions for `com.screenize.Screenize`
+2. Build/package the app via `scripts/package_app.sh`
+3. Install `Screenize.app` to `~/Applications`
+4. Optionally open the app (`--open`)
 
-3. **Install to ~/Applications**:
-   ```bash
-   mkdir -p ~/Applications
-   cp -R ./Screenize.app ~/Applications/
-   ```
+## Manual Build and Install
 
-4. **Launch the application**:
-   ```bash
-   open ~/Applications/Screenize.app
-   ```
+```bash
+./scripts/package_app.sh release
+mkdir -p ~/Applications
+rm -rf ~/Applications/Screenize.app
+cp -R ./Screenize.app ~/Applications/Screenize.app
+open ~/Applications/Screenize.app
+```
 
-## First Launch
+## First Launch and Permissions
 
-On first launch, Screenize will request the following permissions:
+Onboarding blocks continuing until all required permissions are granted:
 
-1. **Screen Recording** — Required to capture your screen
-2. **Microphone** — Required for audio recording
-3. **Accessibility** — Required for UI element detection and smart zoom
+1. Screen Recording
+2. Input Monitoring
+3. Microphone
+4. Accessibility
 
-Grant each permission when prompted, or enable them manually under **System Settings > Privacy & Security**.
+If prompts were previously denied, rerun:
 
-## macOS Gatekeeper Warning
+```bash
+./install.command
+```
 
-Since this is a locally built app without Apple notarization, macOS may display a security warning when you first open it. To open the app:
+or reset manually:
 
-1. Right-click (or Control-click) the Screenize app in ~/Applications
-2. Select **Open** from the context menu
-3. Click **Open** in the dialog that appears
-
-Alternatively, go to **System Settings > Privacy & Security**, scroll down, and click **Open Anyway** next to the Screenize message.
-
-You only need to do this once — macOS will remember your choice for future launches.
+```bash
+tccutil reset All com.screenize.Screenize
+```
 
 ## Updating
-
-To update to the latest version, pull the latest changes and rebuild:
 
 ```bash
 cd screenize
 git pull origin main
-./scripts/package_app.sh release
-cp -R ./Screenize.app ~/Applications/
+./install.command --open
 ```
 
-## Uninstalling
-
-To remove Screenize from your system:
+## Uninstall
 
 ```bash
 rm -rf ~/Applications/Screenize.app
@@ -74,21 +68,16 @@ rm -rf ~/Applications/Screenize.app
 
 ## Troubleshooting
 
-### Permission Issues
+### Build Issues
 
-If permissions get stuck during development, reset them with:
+1. Confirm toolchain availability: `swift --version`
+2. Clean local artifacts: `rm -rf ./.build ./Screenize.app ./dist`
+3. Re-run: `./scripts/package_app.sh release`
 
-```bash
-tccutil reset ScreenCapture com.screenize.Screenize
-tccutil reset Microphone com.screenize.Screenize
-```
+### Gatekeeper Warning
 
-### Build Errors
+If macOS blocks first launch for a locally built app:
 
-If you encounter build errors:
-
-1. Ensure `swift --version` works and reports a recent Swift toolchain
-2. Clean SwiftPM artifacts: `rm -rf ./.build ./Screenize.app ./dist`
-3. Try building again
-
-For more information, see [CONTRIBUTING.md](CONTRIBUTING.md).
+1. Right-click `Screenize.app`
+2. Select **Open**
+3. Confirm **Open** in the dialog

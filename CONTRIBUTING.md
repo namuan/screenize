@@ -1,39 +1,33 @@
 # Contributing to Screenize
 
-Thank you for your interest in contributing to Screenize. This guide explains how to report issues, suggest improvements, and submit code changes.
-
-## Code of Conduct
-
-Please be respectful and constructive in all interactions. We are committed to providing a welcoming and inclusive experience for everyone.
+Thanks for contributing to Screenize.
 
 ## How to Contribute
 
-### Reporting Bugs
+### Report Bugs
 
-1. Search [existing issues](../../issues) to check if the bug has already been reported
-2. If not, open a new issue with:
-   - Steps to reproduce the bug
-   - Expected behavior vs. actual behavior
-   - Your environment (macOS version, Swift toolchain version)
-   - Screenshots or screen recordings if applicable
+1. Search [existing issues](../../issues).
+2. If not found, open a new issue with:
+- Reproduction steps
+- Expected vs actual behavior
+- Environment details (macOS + `swift --version`)
+- Screenshots/recordings if useful
 
-### Suggesting Enhancements
+### Suggest Enhancements
 
-1. Search [existing issues](../../issues) for similar suggestions
-2. Open a new issue describing:
-   - The problem or use case
-   - Your proposed solution
-   - Alternatives you considered
+1. Search [existing issues](../../issues).
+2. Open a new issue with:
+- Problem/use case
+- Proposed solution
+- Alternatives considered
 
-### Pull Requests
+### Submit Pull Requests
 
-1. Fork the repository
-2. Create a feature branch from `main` (`git checkout -b feature/your-feature`)
-3. Make your changes
-4. Run the linter and ensure the project builds without errors
-5. Write clear commit messages (see Style Guide below)
-6. Push to your fork and open a pull request
-7. Fill in the PR description explaining what changed and why
+1. Fork the repo.
+2. Create a branch from `main`.
+3. Implement your change.
+4. Run build and lint locally.
+5. Push and open a PR with clear context.
 
 ## Development Setup
 
@@ -43,49 +37,54 @@ cd screenize
 swift build
 ```
 
-Run the app locally:
+Run the app:
 
 ```bash
 ./scripts/compile_and_run.sh
 ```
 
-**Permissions:** Screenize requires Screen Recording, Microphone, and Accessibility permissions. If permissions break during development, reset them:
+## Permissions for Local Testing
+
+The app requires all of the following for full functionality:
+
+1. Screen Recording
+2. Input Monitoring
+3. Microphone
+4. Accessibility
+
+Reset permissions when needed:
 
 ```bash
-tccutil reset ScreenCapture com.screenize.Screenize
-tccutil reset Microphone com.screenize.Screenize
+tccutil reset All com.screenize.Screenize
 ```
 
-## Style Guide
+or use:
 
-### Code Style
+```bash
+./install.command
+```
 
-This project uses [SwiftLint](https://github.com/realm/SwiftLint) for linting. Run the linter before submitting:
+## Linting
+
+Run:
 
 ```bash
 ./scripts/lint.sh
 ```
 
-To auto-fix violations where possible:
+Auto-fix where possible:
 
 ```bash
 ./scripts/lint.sh --fix
 ```
 
-Configuration is defined in `.swiftlint.yml`. Key conventions in this codebase:
+## Style Expectations
 
-- Use `@MainActor` on all major state classes
-- Use `Manager` / `Coordinator` suffixes for orchestration classes
-- Use `Sendable` types and dispatch queues for thread safety
-- Use normalized coordinates (0–1 range) for mouse positions
-- Keep keyframes sorted by time within tracks
-
-### Commit Messages
-
-- Use the imperative mood: "Add feature" not "Added feature"
-- Keep the first line under 72 characters
-- Reference issue numbers when applicable: `Fix #123`
+- Keep changes focused and minimal.
+- Follow existing naming and organization patterns.
+- Keep keyframes time-sorted within tracks.
+- Use `@MainActor` for UI/state coordination where appropriate.
 
 ## Testing
 
-This project does not yet have an automated test suite. When adding new functionality, consider including tests. Contributions that improve test coverage are welcome.
+There is no full automated test suite yet. If your change is behavior-critical, include reproducible manual test steps in the PR.
