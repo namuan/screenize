@@ -139,6 +139,7 @@ struct PlayheadLine: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     struct PreviewWrapper: View {
         @State private var currentTime: TimeInterval = 5.0
@@ -184,3 +185,4 @@ struct PlayheadLine: View {
 
     return PreviewWrapper()
 }
+#endif

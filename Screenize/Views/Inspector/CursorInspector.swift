@@ -408,6 +408,7 @@ struct CursorStylePreview: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     struct PreviewWrapper: View {
         @State private var keyframe = CursorStyleKeyframe(
@@ -427,3 +428,4 @@ struct CursorStylePreview: View {
 
     return PreviewWrapper()
 }
+#endif

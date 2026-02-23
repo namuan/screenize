@@ -324,6 +324,7 @@ struct CenterPointPicker: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     struct PreviewWrapper: View {
         @State private var keyframe = TransformKeyframe(
@@ -343,3 +344,4 @@ struct CenterPointPicker: View {
 
     return PreviewWrapper()
 }
+#endif

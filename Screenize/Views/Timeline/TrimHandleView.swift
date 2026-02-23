@@ -64,6 +64,7 @@ struct TrimHandleView: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     HStack(spacing: 100) {
         TrimHandleView(isStart: true, isDragging: .constant(false))
@@ -75,3 +76,4 @@ struct TrimHandleView: View {
     .padding()
     .background(Color.gray.opacity(0.3))
 }
+#endif

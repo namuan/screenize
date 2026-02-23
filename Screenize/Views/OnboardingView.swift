@@ -398,6 +398,8 @@ final class AccessibilityStatus: ObservableObject {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     OnboardingView(onComplete: {})
 }
+#endif

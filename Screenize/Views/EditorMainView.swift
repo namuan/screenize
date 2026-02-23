@@ -516,6 +516,7 @@ struct GeneratorPanelView: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     EditorMainView(
         project: ScreenizeProject(
@@ -560,3 +561,4 @@ struct GeneratorPanelView: View {
         )
     )
 }
+#endif

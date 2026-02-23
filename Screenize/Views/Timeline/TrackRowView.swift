@@ -406,6 +406,7 @@ struct AnyTrackRowView: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     struct PreviewWrapper: View {
         @State private var track = TransformTrack(
@@ -445,3 +446,4 @@ struct AnyTrackRowView: View {
 
     return PreviewWrapper()
 }
+#endif

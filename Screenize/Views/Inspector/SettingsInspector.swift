@@ -564,6 +564,7 @@ private struct SolidColorButton: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     struct PreviewWrapper: View {
         @State private var settings = RenderSettings()
@@ -595,3 +596,4 @@ private struct SolidColorButton: View {
 
     return PreviewWrapper()
 }
+#endif

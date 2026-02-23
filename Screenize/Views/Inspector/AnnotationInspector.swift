@@ -572,6 +572,7 @@ private struct RGBAColorPickerRow: View {
     }
 }
 
+#if DEBUG
 #Preview {
     struct PreviewWrapper: View {
         @State private var keyframe = AnnotationKeyframe(time: 1.0, text: "Hello annotation")
@@ -582,3 +583,4 @@ private struct RGBAColorPickerRow: View {
     }
     return PreviewWrapper()
 }
+#endif

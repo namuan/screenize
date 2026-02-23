@@ -192,6 +192,7 @@ private struct Triangle: Shape {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     VStack(spacing: 0) {
         TimeRulerView(
@@ -213,3 +214,4 @@ private struct Triangle: Shape {
     .frame(width: 600)
     .padding()
 }
+#endif

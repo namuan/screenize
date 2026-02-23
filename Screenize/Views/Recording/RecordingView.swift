@@ -285,6 +285,8 @@ private struct RecordingDot: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview("No Source") {
     RecordingView(appState: AppState.shared)
 }
+#endif

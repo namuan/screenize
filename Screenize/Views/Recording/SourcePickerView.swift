@@ -507,6 +507,8 @@ struct WindowCard: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     SourcePickerView(appState: AppState.shared)
 }
+#endif

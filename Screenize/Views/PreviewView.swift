@@ -290,6 +290,7 @@ struct MiniPreviewView: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     struct PreviewWrapper: View {
         @StateObject private var engine = PreviewEngine()
@@ -314,3 +315,4 @@ struct MiniPreviewView: View {
 
     return PreviewWrapper()
 }
+#endif

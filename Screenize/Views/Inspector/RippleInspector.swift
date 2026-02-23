@@ -391,6 +391,7 @@ struct RipplePreview: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     struct PreviewWrapper: View {
         @State private var keyframe = RippleKeyframe(
@@ -412,3 +413,4 @@ struct RipplePreview: View {
 
     return PreviewWrapper()
 }
+#endif

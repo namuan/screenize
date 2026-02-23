@@ -628,6 +628,7 @@ private struct ScrollOffsetPreferenceKey: PreferenceKey {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     struct PreviewWrapper: View {
         @State private var timeline = Timeline(
@@ -698,3 +699,4 @@ private struct ScrollOffsetPreferenceKey: PreferenceKey {
 
     return PreviewWrapper()
 }
+#endif

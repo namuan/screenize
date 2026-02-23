@@ -485,6 +485,7 @@ struct InspectorView: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     struct PreviewWrapper: View {
         @State private var timeline = Timeline(
@@ -576,3 +577,4 @@ struct InspectorView: View {
 
     return PreviewWrapper()
 }
+#endif

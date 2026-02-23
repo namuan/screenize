@@ -379,6 +379,7 @@ struct RecentProjectsView: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview("Editor Loader") {
     EditorLoaderView(
         videoURL: URL(fileURLWithPath: "/test.mp4")
@@ -393,3 +394,4 @@ struct RecentProjectsView: View {
     .frame(width: 300)
     .padding()
 }
+#endif

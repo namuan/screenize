@@ -205,6 +205,7 @@ enum KeyframeColor {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     VStack(spacing: 20) {
         // Default markers
@@ -261,3 +262,4 @@ enum KeyframeColor {
     }
     .padding()
 }
+#endif

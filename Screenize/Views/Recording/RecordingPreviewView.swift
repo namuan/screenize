@@ -254,7 +254,9 @@ private struct PlaceholderPreview: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     RecordingPreviewView(appState: AppState.shared)
         .frame(width: 800, height: 600)
 }
+#endif

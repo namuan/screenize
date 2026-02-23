@@ -356,6 +356,7 @@ struct InlineExportProgressView: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     struct PreviewWrapper: View {
         @StateObject private var engine = ExportEngine()
@@ -385,3 +386,4 @@ struct InlineExportProgressView: View {
 
     return PreviewWrapper()
 }
+#endif

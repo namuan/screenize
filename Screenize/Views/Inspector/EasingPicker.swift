@@ -303,6 +303,7 @@ struct LargeEasingCurvePreview: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     struct PreviewWrapper: View {
         @State private var easing: EasingCurve = .easeOut
@@ -333,3 +334,4 @@ struct LargeEasingCurvePreview: View {
 
     return PreviewWrapper()
 }
+#endif
