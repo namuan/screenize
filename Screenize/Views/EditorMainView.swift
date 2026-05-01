@@ -163,6 +163,12 @@ struct EditorMainView: View {
             Divider()
                 .frame(height: 20)
 
+            // Playback speed
+            playbackSpeedControl
+
+            Divider()
+                .frame(height: 20)
+
             // Add keyframe
             keyframeAddMenu
 
@@ -307,6 +313,48 @@ struct EditorMainView: View {
                 .font(.system(size: 12, design: .monospaced))
                 .foregroundColor(.secondary)
                 .frame(width: 70, alignment: .leading)
+        }
+    }
+
+    // MARK: - Playback Speed Control
+
+    private var playbackSpeedControl: some View {
+        HStack(spacing: 4) {
+            Menu {
+                ForEach([0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 4.0], id: \.self) { speed in
+                    Button {
+                        viewModel.project.timeline.playbackSpeed = speed
+                        viewModel.hasUnsavedChanges = true
+                        viewModel.previewEngine.updatePlaybackSpeed(speed)
+                    } label: {
+                        HStack {
+                            Text("\(String(format: "%g", speed))×")
+                            if abs(viewModel.project.timeline.playbackSpeed - speed) < 0.001 {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+
+                Divider()
+
+                Button {
+                    viewModel.resetPlaybackSpeed()
+                } label: {
+                    Text("Reset to 1.0×")
+                }
+                .disabled(viewModel.project.timeline.playbackSpeed == 1.0)
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "gauge.with.dots.needle.67percent")
+                        .font(.system(size: 12))
+                    Text("\(String(format: "%g", viewModel.project.timeline.playbackSpeed))×")
+                        .font(.system(size: 12, weight: .medium))
+                }
+                .frame(minWidth: 44)
+            }
+            .menuStyle(.borderlessButton)
+            .fixedSize()
         }
     }
 

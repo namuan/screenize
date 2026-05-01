@@ -149,6 +149,21 @@ struct ExportSheetView: View {
 
                 // Estimated file size
                 estimatedFileSize
+
+                // Output duration with speed
+                HStack {
+                    Text("Output duration:")
+                        .foregroundColor(.secondary)
+
+                    Text(formatDuration(project.timeline.outputDuration))
+                        .fontWeight(.medium)
+
+                    if project.timeline.playbackSpeed != 1.0 {
+                        Text("(\(String(format: "%g", project.timeline.playbackSpeed))× speed)")
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .font(.caption)
             }
         }
         .formStyle(.grouped)
@@ -161,7 +176,8 @@ struct ExportSheetView: View {
         let sourceSize = project.media.pixelSize
         let outputSize = renderSettings.outputResolution.size(sourceSize: sourceSize)
         let bitRate = renderSettings.quality.bitRate(for: outputSize)
-        let estimatedBytes = Int64(Double(bitRate) * project.media.duration / 8)
+        let outputDuration = project.timeline.outputDuration
+        let estimatedBytes = Int64(Double(bitRate) * outputDuration / 8)
 
         return HStack {
             Text("Estimated size:")

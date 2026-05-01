@@ -141,6 +141,13 @@ final class EditorViewModel: ObservableObject {
         setTrimRange(start: 0, end: nil)
     }
 
+    /// Reset the playback speed
+    func resetPlaybackSpeed() {
+        project.timeline.playbackSpeed = 1.0
+        hasUnsavedChanges = true
+        previewEngine.updatePlaybackSpeed(1.0)
+    }
+
     // MARK: - Initialization
 
     init(project: ScreenizeProject, projectURL: URL? = nil) {
@@ -189,6 +196,7 @@ final class EditorViewModel: ObservableObject {
         errorMessage = nil
 
         await previewEngine.setup(with: project)
+        previewEngine.updatePlaybackSpeed(project.timeline.effectivePlaybackSpeed)
 
         // Run smart generation when the timeline is empty and auto-generation is enabled
         if autoGenerateKeyframes && isTimelineEmpty {

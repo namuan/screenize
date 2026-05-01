@@ -60,6 +60,9 @@ final class PreviewEngine: ObservableObject {
     /// Trim end time (uses duration if nil)
     private var trimEnd: TimeInterval?
 
+    /// Playback speed multiplier
+    private var playbackSpeed: Double = 1.0
+
     /// Effective trim start time
     private var effectiveTrimStart: TimeInterval {
         max(0, trimStart)
@@ -277,8 +280,8 @@ final class PreviewEngine: ObservableObject {
             Task { @MainActor in
                 guard let self = self, self.isPlaying else { return }
 
-                // Advance the time
-                let newTime = self.currentTime + frameDuration
+                // Advance the time by frame duration scaled by playback speed
+                let newTime = self.currentTime + frameDuration * self.playbackSpeed
 
                 // Stop playback when reaching the trim end
                 if newTime >= self.effectiveTrimEnd {
@@ -329,6 +332,11 @@ final class PreviewEngine: ObservableObject {
                 await renderFrame(at: currentTime)
             }
         }
+    }
+
+    /// Update the playback speed
+    func updatePlaybackSpeed(_ speed: Double) {
+        self.playbackSpeed = speed
     }
 
     /// Update the trim range
