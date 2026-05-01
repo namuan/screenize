@@ -183,53 +183,18 @@ final class ExportEngine: ObservableObject {
             ]
             CVPixelBufferPoolCreate(kCFAllocatorDefault, poolAttrs as CFDictionary, bufferAttrs as CFDictionary, &pixelBufferPool)
 
-            // Trim start time (used for output presentation time)
-            let trimStartTime = CMTime(seconds: trimStart, preferredTimescale: 600)
+            // Local helper: render a source frame to the output
+            func encodeFrame(sourceFrame: CIImage, sourceTime: TimeInterval, outputPTS: CMTime) async throws {
+                guard let evaluator = evaluator, let renderer = renderer else { return }
+                let state = evaluator.evaluate(at: sourceTime)
+                guard let rendered = renderer.render(sourceFrame: sourceFrame, state: state) else { return }
 
-            while let sampleBuffer = readerOutput.copyNextSampleBuffer() {
-                // Check for cancellation
-                if isCancelled {
-                    reader.cancelReading()
-                    writer.cancelWriting()
-                    await MainActor.run { progress = .cancelled }
-                    throw ExportEngineError.cancelled
-                }
-
-                // Extract the source frame
-                guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
-                    frameIndex += 1
-                    continue
-                }
-
-                let sourceFrame = CIImage(cvPixelBuffer: imageBuffer)
-
-                // Presentation time
-                let sampleTime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
-                let originalTime = CMTimeGetSeconds(sampleTime)
-
-                // Evaluate the state
-                guard let evaluator = evaluator else { continue }
-                let state = evaluator.evaluate(at: originalTime)
-
-                // Render the frame
-                guard let renderer = renderer,
-                      let rendered = renderer.render(sourceFrame: sourceFrame, state: state) else {
-                    frameIndex += 1
-                    continue
-                }
-
-                // Create a pixel buffer
                 var outputPixelBuffer: CVPixelBuffer?
                 if let pool = pixelBufferPool {
                     CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pool, &outputPixelBuffer)
                 }
+                guard let pixelBuffer = outputPixelBuffer else { return }
 
-                guard let pixelBuffer = outputPixelBuffer else {
-                    frameIndex += 1
-                    continue
-                }
-
-                // Render the CIImage into the pixel buffer
                 ciContext.render(
                     rendered,
                     to: pixelBuffer,
@@ -237,27 +202,89 @@ final class ExportEngine: ObservableObject {
                     colorSpace: CGColorSpaceCreateDeviceRGB()
                 )
 
-                // Compute the output time (relative to the trim start)
-                let outputPTS = CMTimeSubtract(sampleTime, trimStartTime)
-
                 while !writerInput.isReadyForMoreMediaData {
-                    try await Task.sleep(nanoseconds: 10_000_000) // 10ms
+                    try await Task.sleep(nanoseconds: 10_000_000)
                 }
-
                 adaptor.append(pixelBuffer, withPresentationTime: outputPTS)
+            }
 
-                // Update progress (refresh UI every 10 frames to reduce main-thread load)
-                frameIndex += 1
-                if frameIndex % 10 == 0 || frameIndex == totalFrames {
-                    let currentFrame = frameIndex
-                    await MainActor.run {
-                        progress = .processing(frame: currentFrame, total: totalFrames)
-                        statistics = ExportStatistics(
-                            totalFrames: totalFrames,
-                            processedFrames: currentFrame,
-                            startTime: startTime,
-                            currentTime: Date()
-                        )
+            // Playback speed
+            let playbackSpeed = project.timeline.effectivePlaybackSpeed
+
+            if playbackSpeed == 1.0 {
+                // Fast path: sequential reader for normal speed
+                let trimStartTime = CMTime(seconds: trimStart, preferredTimescale: 600)
+
+                while let sampleBuffer = readerOutput.copyNextSampleBuffer() {
+                    guard !isCancelled else {
+                        reader.cancelReading()
+                        writer.cancelWriting()
+                        await MainActor.run { progress = .cancelled }
+                        throw ExportEngineError.cancelled
+                    }
+
+                    guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
+                        frameIndex += 1
+                        continue
+                    }
+
+                    let sampleTime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+                    let originalTime = CMTimeGetSeconds(sampleTime)
+                    let outputPTS = CMTimeSubtract(sampleTime, trimStartTime)
+
+                    try await encodeFrame(sourceFrame: CIImage(cvPixelBuffer: imageBuffer), sourceTime: originalTime, outputPTS: outputPTS)
+
+                    frameIndex += 1
+                    if frameIndex % 10 == 0 || frameIndex == totalFrames {
+                        let currentFrame = frameIndex
+                        await MainActor.run {
+                            progress = .processing(frame: currentFrame, total: totalFrames)
+                            statistics = ExportStatistics(
+                                totalFrames: totalFrames,
+                                processedFrames: currentFrame,
+                                startTime: startTime,
+                                currentTime: Date()
+                            )
+                        }
+                    }
+                }
+            } else {
+                // Speed-adjusted path: frame-by-frame extraction
+                let outputTotalFrames = Int(ceil(trimmedDuration * frameRate / playbackSpeed))
+
+                for outputFrame in 0..<outputTotalFrames {
+                    guard !isCancelled else {
+                        writer.cancelWriting()
+                        await MainActor.run { progress = .cancelled }
+                        throw ExportEngineError.cancelled
+                    }
+
+                    let sourceTime = trimStart + Double(outputFrame) * playbackSpeed / frameRate
+                    guard sourceTime <= trimEnd else { break }
+
+                    let sourceFrame: CIImage
+                    do {
+                        sourceFrame = try await extractor.extractFrame(at: sourceTime)
+                    } catch {
+                        frameIndex += 1
+                        continue
+                    }
+
+                    let outputPTS = CMTime(value: CMTimeValue(outputFrame), timescale: CMTimeScale(frameRate))
+                    try await encodeFrame(sourceFrame: sourceFrame, sourceTime: sourceTime, outputPTS: outputPTS)
+
+                    frameIndex = outputFrame + 1
+                    if frameIndex % 10 == 0 || frameIndex >= outputTotalFrames {
+                        let currentFrame = frameIndex
+                        await MainActor.run {
+                            progress = .processing(frame: currentFrame, total: outputTotalFrames)
+                            statistics = ExportStatistics(
+                                totalFrames: outputTotalFrames,
+                                processedFrames: currentFrame,
+                                startTime: startTime,
+                                currentTime: Date()
+                            )
+                        }
                     }
                 }
             }

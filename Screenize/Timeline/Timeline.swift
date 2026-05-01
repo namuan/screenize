@@ -16,11 +16,15 @@ struct Timeline: Codable, Equatable {
     /// Trim end time (based on the original video timeline; nil uses duration)
     var trimEnd: TimeInterval?
 
-    init(tracks: [AnyTrack] = [], duration: TimeInterval = 0, trimStart: TimeInterval = 0, trimEnd: TimeInterval? = nil) {
+    /// Playback speed multiplier (1.0 = normal, 2.0 = 2x fast, 0.5 = half speed)
+    var playbackSpeed: Double
+
+    init(tracks: [AnyTrack] = [], duration: TimeInterval = 0, trimStart: TimeInterval = 0, trimEnd: TimeInterval? = nil, playbackSpeed: Double = 1.0) {
         self.tracks = tracks
         self.duration = duration
         self.trimStart = trimStart
         self.trimEnd = trimEnd
+        self.playbackSpeed = playbackSpeed
     }
 
     // MARK: - Trim Properties
@@ -50,23 +54,37 @@ struct Timeline: Codable, Equatable {
         time >= effectiveTrimStart && time <= effectiveTrimEnd
     }
 
+    // MARK: - Speed Properties
+
+    /// Clamped playback speed (0.25x to 4.0x)
+    var effectivePlaybackSpeed: Double {
+        max(0.25, min(4.0, playbackSpeed))
+    }
+
+    /// Output duration after applying playback speed
+    var outputDuration: TimeInterval {
+        guard trimmedDuration > 0 else { return 0 }
+        return trimmedDuration / effectivePlaybackSpeed
+    }
+
     // MARK: - Codable
 
     private enum CodingKeys: String, CodingKey {
-        case tracks, duration, trimStart, trimEnd
+        case tracks, duration, trimStart, trimEnd, playbackSpeed
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         tracks = try container.decode([AnyTrack].self, forKey: .tracks)
         duration = try container.decode(TimeInterval.self, forKey: .duration)
-        // Backward compatibility: trimStart/trimEnd may be missing
+        // Backward compatibility: trimStart/trimEnd/playbackSpeed may be missing
         trimStart = try container.decodeIfPresent(TimeInterval.self, forKey: .trimStart) ?? 0
         trimEnd = try container.decodeIfPresent(TimeInterval.self, forKey: .trimEnd)
+        playbackSpeed = try container.decodeIfPresent(Double.self, forKey: .playbackSpeed) ?? 1.0
     }
 
     /// Create a timeline initialized with default tracks
-    static func withDefaultTracks(duration: TimeInterval, trimStart: TimeInterval = 0, trimEnd: TimeInterval? = nil) -> Self {
+    static func withDefaultTracks(duration: TimeInterval, trimStart: TimeInterval = 0, trimEnd: TimeInterval? = nil, playbackSpeed: Double = 1.0) -> Self {
         Self(
             tracks: [
                 .transform(TransformTrack()),
@@ -77,7 +95,8 @@ struct Timeline: Codable, Equatable {
             ],
             duration: duration,
             trimStart: trimStart,
-            trimEnd: trimEnd
+            trimEnd: trimEnd,
+            playbackSpeed: playbackSpeed
         )
     }
 
